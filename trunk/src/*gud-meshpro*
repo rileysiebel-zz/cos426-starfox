@@ -1,0 +1,704 @@
+Current directory is /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/
+GNU gdb 6.3.50-20050815 (Apple version gdb-1510) (Wed Sep 22 02:45:02 UTC 2010)
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "x86_64-apple-darwin"...Reading symbols for shared libraries ... done
+
+(gdb) break R3Mesh::Truncate
+Breakpoint 1 at 0x1000304ed: file R3Mesh.cpp, line 320.
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube0.2.off -truncate
+Reading symbols for shared libraries ++. done
+Too few arguments for -truncate
+Usage: meshpro input_mesh output_mesh [  -option [arg ...] ...]
+  -help
+  -translate <real:dx> <real:dy> <real:dz>
+  -scale <real:sx> <real:sy> <real:sz>
+  -rotate <real:angle> <real:px> <real:py> <real:pz> <real:vx> <real:vy> <real:vz>
+  -noise <real:factor>
+  -inflate <real:factor>
+  -fun
+  -smooth
+  -sharpen
+  -smoothbilateral
+  -truncate <real:t>
+  -bevel <real:t>
+  -splitfaces
+  -starfaces <real:factor>
+  -splitlongedges <real:max_edge_length>
+ (max_edge_length is relative to mesh radius)  -collapesshortedges <real:min_edge_length>
+ (min_edge_length is relative to mesh radius)  -vertexcluster <real:grid_cell_size> (grid_cell_size is relative to mesh radius)
+  -bezier <file:controlmesh> <int:m> <int:n>
+  -bspline <file:controlmesh> <int:m> <int:n>
+  -loop
+  -catmullclark
+  -revolution <file:profile> <real:px> <real:py> <real:pz> <real:vx> <real:vy> <real:vz> <real:angle_step>
+  -sweep <file:crosssection> <file:centerline>
+  -fixholes
+  -fixcracks <real:epsilon> (epsilon is relative to mesh radius)
+  -fixintersections
+  -intersect <file:mesh>
+  -subtract <file:mesh>
+  -union <file:mesh>
+  -crop <real:a> <real:b> <real:c> <real:d>
+
+Program exited with code 01.
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+
+Breakpoint 1, R3Mesh::Truncate (this=0x100100190, t=0.20000000000000001) at R3Mesh.cpp:320
+320	  R3Mesh *src = new R3Mesh(*this);
+(gdb) n
+322	  for(unsigned int i = 0; i < src->vertices.size(); i++) {
+(gdb) 
+325	    vector<R3MeshEdge *> edges = src->vertices[i]->Edges();
+(gdb) 
+326	    vector<R3MeshFace *> faces = src->vertices[i]->Faces();
+(gdb) p *edges
+Structure has no component named operator*.
+(gdb) p edges[0]
+$1 = (R3MeshEdge *&) @0x100101a60: 0x100100840
+(gdb) p *edges[0]
+$2 = {
+  mesh = 0x100100190, 
+  origin = 0, 
+  inverse = 14, 
+  next = 1, 
+  face = 0, 
+  id = 0
+}
+(gdb) p *src->edges[0]
+$3 = {
+  mesh = 0x100100190, 
+  origin = 0, 
+  inverse = 14, 
+  next = 1, 
+  face = 0, 
+  id = 0
+}
+(gdb) n
+328	    DeleteVertex(vertices[i]);
+(gdb) p edges.size()
+$4 = 3
+(gdb) p faces.size()
+$5 = 3
+(gdb) n
+330	    R3MeshFace *f = new R3MeshFace();
+(gdb) 
+331	    f->mesh = this;
+(gdb) n
+332	    f->id = faces.size();
+(gdb) 
+333	    faces.push_back(f);
+(gdb) 
+336	    R3MeshVertex *first_vertex = NULL;
+(gdb) 
+337	    R3MeshVertex *last_vertex = NULL;
+(gdb) 
+338	    R3MeshEdge *first_out = NULL;
+(gdb) 
+339	    R3MeshEdge *last_out = NULL;
+(gdb) 
+340	    R3MeshEdge *first_inverse = NULL;
+(gdb) 
+341	    R3MeshEdge *last_inverse = NULL;
+(gdb) 
+342	    for(unsigned int e = 0; e < edges.size(); e++) {
+(gdb) 
+345	      R3MeshVertex *v = new R3MeshVertex(src->vertices[i]->position, NULL, NULL);
+(gdb) n
+
+Program received signal EXC_BAD_ACCESS, Could not access memory.
+Reason: KERN_INVALID_ADDRESS at address: 0x0000000000000000
+0x0000000100009bec in R3Vector::R3Vector (this=0x7fff5fbfebc0, array=0x0) at R3Vector.cpp:71
+71	  v[0] = array[0]; 
+(gdb) p src
+No symbol "src" in current context.
+(gdb) p *src
+No symbol "src" in current context.
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+
+Breakpoint 1, R3Mesh::Truncate (this=0x100100190, t=0.20000000000000001) at R3Mesh.cpp:320
+320	  R3Mesh *src = new R3Mesh(*this);
+(gdb) n
+322	  for(unsigned int i = 0; i < src->vertices.size(); i++) {
+(gdb) p *src
+$6 = {
+  vertices = {
+    <std::_Vector_base<R3MeshVertex*,std::allocator<R3MeshVertex*> >> = {
+      _M_impl = {
+        <std::allocator<R3MeshVertex*>> = {
+          <__gnu_cxx::new_allocator<R3MeshVertex*>> = {<No data fields>}, <No data fields>}, 
+        members of std::_Vector_base<R3MeshVertex*,std::allocator<R3MeshVertex*> >::_Vector_impl: 
+        _M_start = 0x100101830, 
+        _M_finish = 0x100101870, 
+        _M_end_of_storage = 0x100101870
+      }
+    }, <No data fields>}, 
+  empty_v = {
+    <std::_Vector_base<int,std::allocator<int> >> = {
+      _M_impl = {
+        <std::allocator<int>> = {
+          <__gnu_cxx::new_allocator<int>> = {<No data fields>}, <No data fields>}, 
+        members of std::_Vector_base<int,std::allocator<int> >::_Vector_impl: 
+        _M_start = 0x0, 
+        _M_finish = 0x0, 
+        _M_end_of_storage = 0x0
+      }
+    }, <No data fields>}, 
+  faces = {
+    <std::_Vector_base<R3MeshFace*,std::allocator<R3MeshFace*> >> = {
+      _M_impl = {
+        <std::allocator<R3MeshFace*>> = {
+          <__gnu_cxx::new_allocator<R3MeshFace*>> = {<No data fields>}, <No data fields>}, 
+        members of std::_Vector_base<R3MeshFace*,std::allocator<R3MeshFace*> >::_Vector_impl: 
+        _M_start = 0x100101870, 
+        _M_finish = 0x1001018a0, 
+        _M_end_of_storage = 0x1001018a0
+      }
+    }, <No data fields>}, 
+  empty_f = {
+    <std::_Vector_base<int,std::allocator<int> >> = {
+      _M_impl = {
+        <std::allocator<int>> = {
+          <__gnu_cxx::new_allocator<int>> = {<No data fields>}, <No data fields>}, 
+        members of std::_Vector_base<int,std::allocator<int> >::_Vector_impl: 
+        _M_start = 0x0, 
+        _M_finish = 0x0, 
+        _M_end_of_storage = 0x0
+      }
+    }, <No data fields>}, 
+  edges = {
+    <std::_Vector_base<R3MeshEdge*,std::allocator<R3MeshEdge*> >> = {
+      _M_impl = {
+        <std::allocator<R3MeshEdge*>> = {
+          <__gnu_cxx::new_allocator<R3MeshEdge*>> = {<No data fields>}, <No data fields>}, 
+        members of std::_Vector_base<R3MeshEdge*,std::allocator<R3MeshEdge*> >::_Vector_impl: 
+        _M_start = 0x1001018a0, 
+        _M_finish = 0x100101960, 
+        _M_end_of_storage = 0x100101960
+      }
+    }, <No data fields>}, 
+  empty_e = {
+    <std::_Vector_base<int,std::allocator<int> >> = {
+      _M_impl = {
+        <std::allocator<int>> = {
+          <__gnu_cxx::new_allocator<int>> = {<No data fields>}, <No data fields>}, 
+        members of std::_Vector_base<int,std::allocator<int> >::_Vector_impl: 
+        _M_start = 0x0, 
+        _M_finish = 0x0, 
+        _M_end_of_storage = 0x0
+      }
+    }, <No data fields>}, 
+  bbox = {
+    minpt = {
+      v = {-0.5, -0.5, -0.5}
+    }, 
+    maxpt = {
+      v = {0.5, 0.5, 0.5}
+    }
+  }, 
+  edge_map = {
+    _M_t = {
+      _M_impl = {
+        <std::allocator<std::_Rb_tree_node<std::pair<const int, std::map<int, int, std::less<int>, std::allocator<std::pair<const int, int> > > > > >> = {
+          <__gnu_cxx::new_allocator<std::_Rb_tree_node<std::pair<const int, std::map<int, int, std::less<int>, std::allocator<std::pair<const int, int> > > > > >> = {<No data fields>}, <No data fields>}, 
+        members of std::_Rb_tree<int,std::pair<const int, std::map<int, int, std::less<int>, std::allocator<std::pair<const int, int> > > >,std::_Select1st<std::pair<const int, std::map<int, int, std::less<int>, std::allocator<std::pair<const int, int> > > > >,std::less<int>,std::allocator<std::pair<const int, std::map<int, int, std::less<int>, std::allocator<std::pair<const int, int> > > > > >::_Rb_tree_impl<std::less<int>,false>: 
+        _M_key_compare = {
+          <std::binary_function<int,int,bool>> = {<No data fields>}, <No data fields>}, 
+        _M_header = {
+          _M_color = std::_S_red, 
+          _M_parent = 0x0, 
+          _M_left = 0x1001017f8, 
+          _M_right = 0x1001017f8
+        }, 
+        _M_node_count = 0
+      }
+    }
+  }, 
+  randomed = false
+}
+(gdb) p src->vertices.size()
+$7 = 8
+(gdb) p src->faces.size()
+$8 = 6
+(gdb) p src->edges.size()
+$9 = 24
+(gdb) n
+325	    vector<R3MeshEdge *> edges = src->vertices[i]->Edges();
+(gdb) 
+326	    vector<R3MeshFace *> faces = src->vertices[i]->Faces();
+(gdb) 
+328	    DeleteVertex(vertices[i]);
+(gdb) 
+330	    R3MeshFace *f = new R3MeshFace();
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+`/Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro' has changed; re-reading symbols.
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+Re-enabling shared library breakpoint 1
+
+Breakpoint 1, R3Mesh::Truncate (this=0x100100190, t=0.20000000000000001) at R3Mesh.cpp:320
+320	  R3Mesh *src = new R3Mesh(*this);
+(gdb) n
+322	  for(unsigned int i = 0; i < src->vertices.size(); i++) {
+(gdb) 
+325	    vector<R3MeshEdge *> edges = src->vertices[i]->Edges();
+(gdb) 
+326	    vector<R3MeshFace *> faces = src->vertices[i]->Faces();
+(gdb) 
+328	    R3Point position = vertices[i]->position;
+(gdb) 
+329	    DeleteVertex(vertices[i]);
+(gdb) 
+331	    R3MeshFace *f = new R3MeshFace();
+(gdb) 
+332	    f->mesh = this;
+(gdb) 
+333	    f->id = faces.size();
+(gdb) 
+334	    faces.push_back(f);
+(gdb) 
+337	    R3MeshVertex *first_vertex = NULL;
+(gdb) 
+338	    R3MeshVertex *last_vertex = NULL;
+(gdb) 
+339	    R3MeshEdge *first_out = NULL;
+(gdb) 
+340	    R3MeshEdge *last_out = NULL;
+(gdb) 
+341	    R3MeshEdge *first_inverse = NULL;
+(gdb) 
+342	    R3MeshEdge *last_inverse = NULL;
+(gdb) 
+343	    for(unsigned int e = 0; e < edges.size(); e++) {
+(gdb) 
+346	      R3MeshVertex *v = new R3MeshVertex(position, NULL, NULL);
+(gdb) 
+
+Program received signal EXC_BAD_ACCESS, Could not access memory.
+Reason: KERN_INVALID_ADDRESS at address: 0x0000000000000000
+0x0000000100009bec in R3Vector::R3Vector (this=0x7fff5fbfeba0, array=0x0) at R3Vector.cpp:71
+71	  v[0] = array[0]; 
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate
+The program being debugged has been started already.
+Start it from the beginning? (y or n) n
+Program not restarted.
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+`/Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro' has changed; re-reading symbols.
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+Re-enabling shared library breakpoint 1
+Breakpoint 1 at 0x10003043d: file R3Mesh.cpp, line 320.
+
+Breakpoint 1, R3Mesh::Truncate (this=0x100100190, t=0.20000000000000001) at R3Mesh.cpp:320
+320	  R3Mesh *src = new R3Mesh(*this);
+(gdb) n
+322	  for(unsigned int i = 0; i < src->vertices.size(); i++) {
+(gdb) 
+325	    vector<R3MeshEdge *> edges = src->vertices[i]->Edges();
+(gdb) 
+326	    vector<R3MeshFace *> faces = src->vertices[i]->Faces();
+(gdb) 
+328	    const R3Point position = vertices[i]->position;
+(gdb) 
+329	    const R3Vector normal = *(new R3Vector());
+(gdb) 
+330	    const R2Point texcoords = *(new R2Point());
+(gdb) 
+331	    DeleteVertex(vertices[i]);
+(gdb) 
+333	    R3MeshFace *f = new R3MeshFace();
+(gdb) 
+334	    f->mesh = this;
+(gdb) 
+335	    f->id = faces.size();
+(gdb) 
+336	    faces.push_back(f);
+(gdb) 
+339	    R3MeshVertex *first_vertex = NULL;
+(gdb) 
+340	    R3MeshVertex *last_vertex = NULL;
+(gdb) 
+341	    R3MeshEdge *first_out = NULL;
+(gdb) 
+342	    R3MeshEdge *last_out = NULL;
+(gdb) 
+343	    R3MeshEdge *first_inverse = NULL;
+(gdb) 
+344	    R3MeshEdge *last_inverse = NULL;
+(gdb) 
+345	    for(unsigned int e = 0; e < edges.size(); e++) {
+(gdb) 
+348	      R3MeshVertex *v = new R3MeshVertex(position, normal, texcoords);
+(gdb) 
+349	      v->mesh = this;
+(gdb) 
+350	      v->id = vertices.size();
+(gdb) 351	      vertices.push_back(v);
+(gdb) p position
+$1 = {
+  v = {-0.5, -0.5, 0.5}
+}
+(gdb)n n
+355		src->vertices[i]->position.X();
+(gdb) 
+357		src->vertices[i]->position.Y();
+(gdb) n
+359		src->vertices[i]->position.Z();
+(gdb) p x
+$2 = 1
+(gdb) p y
+$3 = 0
+(gdb) p z
+$4 = 9.671776823062731e+25
+(gdb) n
+362				      v->position.Z() + (t * z));
+(gdb) p z
+$5 = 0
+(gdb) p src->vertices[src->edges[src->edges[e]->inverse]->origin]->position
+$6 = {
+  v = {0.5, -0.5, 0.5}
+}
+(gdb) [ p x
+Undefined command: "".  Try "help".
+(gdb) p x
+$7 = 1
+(gdb)  p y
+$8 = 0
+(gdb)  p z
+$9 = 0
+(gdb) n
+363	      v->position = *p;
+(gdb) p p
+$10 = (R3Point *) 0x100101b10
+(gdb) p *p
+$11 = {
+  v = {-0.29999999999999999, -0.5, 0.5}
+}
+(gdb) n
+366	      edges[e]->origin = v->id;
+(gdb) 
+369	      f->vertices.push_back(v);
+(gdb) n
+372	      if(last_vertex != NULL) {
+(gdb) 
+402	      if(first_out == NULL)
+(gdb) 
+403		first_out = src->edges[e];
+(gdb) 
+404	      last_out = src->edges[e];
+(gdb) 
+406	      if(first_vertex == NULL)
+(gdb) 
+407		  first_vertex = v;
+(gdb) 
+408	      last_vertex = v;
+(gdb) 
+345	    for(unsigned int e = 0; e < edges.size(); e++) {
+(gdb) 
+348	      R3MeshVertex *v = new R3MeshVertex(position, normal, texcoords);
+(gdb) p src->vertices[src->edges[src->edges[e]->inverse]->origion]->position
+There is no member or method named origion.
+(gdb) p src->vertices[src->edges[src->edges[e]->inverse]->origon]->position
+There is no member or method named origon.
+(gdb) p src->vertices[src->edges[src->edges[e]->inverse]->origin]->position
+$12 = {
+  v = {0.5, 0.5, 0.5}
+}
+(gdb) p src->vertices[src->edges[edges[0]->inverse]->origin]->position
+$13 = {
+  v = {0.5, -0.5, 0.5}
+}
+(gdb) p src->vertices[src->edges[edges[1]->inverse]->origin]->position
+$14 = {
+  v = {-0.5, -0.5, -0.5}
+}
+(gdb) p src->vertices[src->edges[edges[2]->inverse]->origin]->position
+$15 = {
+  v = {-0.5, 0.5, 0.5}
+}
+(gdb) p src->vertices[src->edges[edges[e]->inverse]->origin]->position
+$16 = {
+  v = {-0.5, -0.5, -0.5}
+}
+(gdb) n
+349	      v->mesh = this;
+(gdb) 
+350	      v->id = vertices.size();
+(gdb) 
+351	      vertices.push_back(v);
+(gdb) 
+355		src->vertices[i]->position.X();
+(gdb) 
+357		src->vertices[i]->position.Y();
+(gdb) 
+359		src->vertices[i]->position.Z();
+(gdb) 
+362				      v->position.Z() + (t * z));
+(gdb) p x
+$17 = -0.20000000000000001
+(gdb) p y
+$18 = 0
+(gdb)  p z
+$19 = -1
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+`/Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro' has changed; re-reading symbols.
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+Re-enabling shared library breakpoint 1
+Breakpoint 1 at 0x10003045d: file R3Mesh.cpp, line 320.
+
+Breakpoint 1, R3Mesh::Truncate (this=0x100100190, t=0.20000000000000001) at R3Mesh.cpp:320
+320	  R3Mesh *src = new R3Mesh(*this);
+(gdb) n
+322	  for(unsigned int i = 0; i < src->vertices.size(); i++) {
+(gdb) 
+325	    vector<R3MeshEdge *> edges = src->vertices[i]->Edges();
+(gdb) 
+326	    vector<R3MeshFace *> faces = src->vertices[i]->Faces();
+(gdb) 
+328	    const R3Point position = vertices[i]->position;
+(gdb) 
+329	    const R3Vector normal = *(new R3Vector());
+(gdb) 
+330	    const R2Point texcoords = *(new R2Point());
+(gdb) 
+331	    DeleteVertex(vertices[i]);
+(gdb) 
+333	    R3MeshFace *f = new R3MeshFace();
+(gdb) 
+334	    f->mesh = this;
+(gdb) 
+335	    f->id = faces.size();
+(gdb) 
+336	    faces.push_back(f);
+(gdb) 
+339	    R3MeshVertex *first_vertex = NULL;
+(gdb) 
+340	    R3MeshVertex *last_vertex = NULL;
+(gdb) 
+341	    R3MeshEdge *first_out = NULL;
+(gdb) 
+342	    R3MeshEdge *last_out = NULL;
+(gdb) 
+343	    R3MeshEdge *first_inverse = NULL;
+(gdb) 
+344	    R3MeshEdge *last_inverse = NULL;
+(gdb) 
+345	    for(unsigned int e = 0; e < edges.size(); e++) {
+(gdb) 
+348	      R3MeshVertex *v = new R3MeshVertex(position, normal, texcoords);
+(gdb) 
+349	      v->mesh = this;
+(gdb) 
+350	      v->id = vertices.size();
+(gdb) 
+351	      vertices.push_back(v);
+(gdb) 
+355		position.X();
+(gdb) 
+357		position.Y();
+(gdb) 
+359		position.Z();
+(gdb) 
+362				      v->position.Z() + (t * z));
+(gdb) p x
+$1 = 1
+(gdb) p y
+$2 = 0
+(gdb)  p z
+$3 = 0
+(gdb) n
+363	      v->position = *p;
+(gdb) 
+366	      edges[e]->origin = v->id;
+(gdb) 
+369	      f->vertices.push_back(v);
+(gdb) 
+372	      if(last_vertex != NULL) {
+(gdb) 
+403	      if(first_out == NULL)
+(gdb) 
+404		first_out = src->edges[e];
+(gdb) 
+405	      last_out = src->edges[e];
+(gdb) 
+407	      if(first_vertex == NULL)
+(gdb) 
+408		  first_vertex = v;
+(gdb) 
+409	      last_vertex = v;
+(gdb) 
+345	    for(unsigned int e = 0; e < edges.size(); e++) {
+(gdb) n
+348	      R3MeshVertex *v = new R3MeshVertex(position, normal, texcoords);
+(gdb) 
+349	      v->mesh = this;
+(gdb) 
+350	      v->id = vertices.size();
+(gdb) 
+351	      vertices.push_back(v);
+(gdb) 
+355		position.X();
+(gdb) 
+357		position.Y();
+(gdb) 
+359		position.Z();
+(gdb) 
+362				      v->position.Z() + (t * z));
+(gdb) 
+363	      v->position = *p;
+(gdb) p *p
+$4 = {
+  v = {-0.5, -0.5, 0.29999999999999999}
+}
+(gdb) n
+366	      edges[e]->origin = v->id;
+(gdb) p src->vertices[src->edges[edges[e]->inverse]->origin]->position
+$5 = {
+  v = {-0.5, -0.5, -0.5}
+}
+(gdb) n
+369	      f->vertices.push_back(v);
+(gdb) p src->vertices[src->eges[edges[e]->inverse]->origin]->position
+There is no member or method named eges.
+(gdb) p src->vertices[src->edges[edges[0]->inverse]->origin]->position
+$6 = {
+  v = {0.5, -0.5, 0.5}
+}
+(gdb) n
+372	      if(last_vertex != NULL) {
+(gdb) p src->vertices[src->edges[edges[0]->inverse]->origin]->position
+$7 = {
+  v = {0.5, -0.5, 0.5}
+}
+(gdb) edges[e]->origion
+Undefined command: "edges".  Try "help".
+(gdb) edges[e]->origin
+Undefined command: "edges".  Try "help".
+(gdb) p edges[e]->origion
+There is no member or method named origion.
+(gdb) p edges[e]->origin
+$8 = 8
+(gdb) p src->vertices[edges[e]->origin]->position
+$9 = {
+  v = {2.1225148840004693e-314, 2.12251489981057e-314, 2.12251489981057e-314}
+}
+(gdb) n
+373		R3MeshEdge *edge = new R3MeshEdge();
+(gdb) 
+374		edge->mesh = this;
+(gdb) p e
+$10 = 1
+(gdb) run ../input/cube.off ../input/truncatedcube.off -truncate 0.2
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube.off -truncate 0.2
+
+Breakpoint 1, R3Mesh::Truncate (this=0x100100190, t=0.20000000000000001) at R3Mesh.cpp:320
+320	  R3Mesh *src = new R3Mesh(*this);
+(gdb) n
+322	  for(unsigned int i = 0; i < src->vertices.size(); i++) {
+(gdb) n
+325	    vector<R3MeshEdge *> edges = src->vertices[i]->Edges();
+(gdb) 
+326	    vector<R3MeshFace *> faces = src->vertices[i]->Faces();
+(gdb) p src->vertices[edges[0]->origin]->position
+$11 = {
+  v = {-0.5, -0.5, 0.5}
+}
+(gdb) p src->vertices[src->edges[edges[0]->inverse]->origin]->position
+$12 = {
+  v = {0.5, -0.5, 0.5}
+}
+(gdb) p src->vertices[src->edges[src->edges[edges[0]->next]->inverse]->origin]->position
+$13 = {
+  v = {0.5, 0.5, 0.5}
+}
+(gdb) p src->vertices[src->edges[src->edges[edges[1]->next]->inverse]->origin]->position
+$14 = {
+  v = {0.5, -0.5, -0.5}
+}
+(gdb) break R3MeshVertex::Edges
+the class R3MeshVertex does not have any method named Edges
+Hint: try 'R3MeshVertex::Edges<TAB> or 'R3MeshVertex::Edges<ESC-?>
+(Note leading single quote.)
+Make breakpoint pending on future shared library load? (y or [n]) 
+(gdb) break R3MeshVertex::Edges
+the class R3MeshVertex does not have any method named Edges
+Hint: try 'R3MeshVertex::Edges<TAB> or 'R3MeshVertex::Edges<ESC-?>
+(Note leading single quote.)
+Make breakpoint pending on future shared library load? (y or [n]) n
+(gdb) kil
+Kill the program being debugged? (y or n) y
+(gdb) break R3MeshVertex::Edges
+Current directory is /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/
+
+the class R3MeshVertex does not have any method named Edges
+Hint: try 'R3MeshVertex::Edges<TAB> or 'R3MeshVertex::Edges<ESC-?>
+(Note leading single quote.)
+Make breakpoint pending on future shared library load? (y or [n]) n
+(gdb) break R3MeshVertex::AverageEdgeLength
+Breakpoint 2 at 0x10002c716: file R3Mesh.cpp, line 1511.
+(gdb) quit
+
+Debugger finished
+GNU gdb 6.3.50-20050815 (Apple version gdb-1510) (Wed Sep 22 02:45:02 UTC 2010)
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "x86_64-apple-darwin".../Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro: No such file or directory
+
+(gdb) quit
+
+Debugger finished
+y
+Current directory is /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/
+GNU gdb 6.3.50-20050815 (Apple version gdb-1510) (Wed Sep 22 02:45:02 UTC 2010)
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "x86_64-apple-darwin"...Reading symbols for shared libraries ... done
+
+(gdb) break R3MeshVertex::Edges
+Breakpoint 1 at 0x10002d1fd: file R3Mesh.cpp, line 1528.
+(gdb) break R3Mesh::Truncate
+Breakpoint 2 at 0x10003045d: file R3Mesh.cpp, line 320.
+(gdb) run ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+Starting program: /Users/riley/Desktop/Princeton/Spring '11/Graphics/cos426_assignment2/src/meshpro ../input/cube.off ../input/truncatedcube0.2.off -truncate 0.2
+Reading symbols for shared libraries ++. done
+
+Breakpoint 2, R3Mesh::Truncate (this=0x100100190, t=0.20000000000000001) at R3Mesh.cpp:320
+320	  R3Mesh *src = new R3Mesh(*this);
+(gdb) n
+322	  for(unsigned int i = 0; i < src->vertices.size(); i++) {
+(gdb) 
+325	    vector<R3MeshEdge *> edges = src->vertices[i]->Edges();
+(gdb) s
+std::vector<R3MeshVertex*, std::allocator<R3MeshVertex*> >::operator[] (this=0x100101780, __n=0) at stl_vector.h:478
+478	      { return *(this->_M_impl._M_start + __n); }
+(gdb) n
+
+Breakpoint 1, R3MeshVertex::Edges (this=0x1001004a0) at R3Mesh.cpp:1528
+1528	  vector<R3MeshEdge *> edges;
+(gdb) 
+1529	  R3MeshEdge *first = mesh->edges[edge];
+(gdb) 
+1530	  R3MeshEdge *edge = first;
+(gdb)  p vertices[edges[first->inverse]->origin]->position
+No symbol "vertices" in current context.
+(gdb) p mesh->vertices[mesh->edges[first->inverse]->origin]->position
