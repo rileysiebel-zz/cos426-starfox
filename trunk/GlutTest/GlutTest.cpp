@@ -267,13 +267,13 @@ int main(int argc, char **argv) {
 	glEnable(GL_DEPTH_TEST);
 
 	// texturing
-	Image* image = loadBMP("images\\brick.bmp");
+/*	Image* image = loadBMP("images\\brick.bmp");
 	texBrick = loadTexture(image);
 	delete image;
 
 	image = loadBMP("images\\stone.bmp");
 	texStone = loadTexture(image);
-	delete image;
+	delete image; */
 
 	glEnable(GL_TEXTURE_2D);
 
