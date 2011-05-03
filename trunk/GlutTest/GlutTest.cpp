@@ -34,32 +34,6 @@ float deltaMoveX = 0, deltaMoveY = 0;
 float angle = 0.0f;
 float deltaAngle = 0.0f;
 
-void GLUTResize(int w, int h) {
-
-	// Prevent a divide by zero, when window is too short
-	// (you cant make a window of zero width).
-	if (h == 0)
-		h = 1;
-	float ratio =  w * 1.0 / h;
-
-	// Use the Projection Matrix
-	glMatrixMode(GL_PROJECTION);
-
-	// Reset Matrix
-	glLoadIdentity();
-
-	// Set the viewport to be the entire window
-	glViewport(0, 0, w, h);
-
-	// Set the correct perspective.
-	gluPerspective(45.0f, ratio, 0.1f, 100.0f);
-
-	// Get Back to the Modelview
-	glMatrixMode(GL_MODELVIEW);
-}
-
-
-
 void DrawShape(R3Shape *shape)
 {
   // Check shape type
@@ -388,8 +362,10 @@ void DrawLights(R3Scene *scene)
       double r = light->radius;
       R3Point p = light->position;
       int dim = light->direction.MinDimension();
-      if (dim == 0) { v1 = light->direction % R3posx_vector; v1.Normalize(); v2 = light->direction % v1; }
-      else if (dim == 1) { v1 = light->direction % R3posy_vector; v1.Normalize(); v2 = light->direction % v1; }
+      if (dim == 0) { v1 = light->direction % R3posx_vector; v1.Normalize(); 
+	v2 = light->direction % v1; }
+      else if (dim == 1) { v1 = light->direction % R3posy_vector; v1.Normalize(); 
+	v2 = light->direction % v1; }
       else { v1 = light->direction % R3posz_vector; v1.Normalize(); v2 = light->direction % v1; }
       glBegin(GL_POLYGON);
       glVertex3d(p[0] +  1.00*r*v1[0] +  0.00*r*v2[0], p[1] +  1.00*r*v1[1] +  0.00*r*v2[1], p[2] +  1.00*r*v1[2] +  0.00*r*v2[2]);
@@ -419,6 +395,30 @@ void DrawScene(R3Scene *scene)
   DrawNode(scene, scene->root);
 }
 
+void GLUTResize(int w, int h) {
+
+  // Prevent a divide by zero, when window is too short
+  // (you cant make a window of zero width).
+  if (h == 0)
+    h = 1;
+  float ratio =  w * 1.0 / h;
+  
+  // Use the Projection Matrix
+  glMatrixMode(GL_PROJECTION);
+  
+  // Reset Matrix
+  glLoadIdentity();
+  
+  // Set the viewport to be the entire window
+  glViewport(0, 0, w, h);
+  
+  // Set the correct perspective.
+  gluPerspective(45.0f, ratio, 0.1f, 100.0f);
+  
+  // Get Back to the Modelview
+  glMatrixMode(GL_MODELVIEW);
+}
+
 void GLUTRedraw(void) {
   // Initialize OpenGL drawing modes
   glEnable(GL_LIGHTING);
@@ -441,7 +441,7 @@ void GLUTRedraw(void) {
   //DrawCamera(scene);
 
   // Draw scene lights
-  DrawLights(scene);
+  //DrawLights(scene);
 
   // Draw scene surfaces
   glEnable(GL_LIGHTING);
@@ -564,7 +564,6 @@ ReadScene(const char *filename) {
 int main(int argc, char **argv) {
 
   GLUTInit(&argc, argv);
-  // enter GLUT event processing cycle
 
   // Allocate mesh
   scene = ReadScene(input_scene_name);
