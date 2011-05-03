@@ -14,17 +14,17 @@
 # include <GL/glut.h>
 #endif
 
-void changeSize(int w, int h);
-static void drawBrickBox(GLfloat size, GLenum type);
-void glutSolidBrickCube(GLdouble size);
-void drawBuilding();
+void GLUTResize(int w, int h);
+//static void drawBrickBox(GLfloat size, GLenum type);
+//void glutSolidBrickCube(GLdouble size);
+//void drawBuilding();
 GLuint loadTexture(Image* image);
-void computeDir(float deltaAngle);
-void computePos(float deltaMoveX, float deltaMoveY);
-void moveForward();
-void renderScene(void);
-void processNormalKeys(unsigned char key, int xx, int yy);
-void pressKey(int key, int xx, int yy);
+//void computeDir(float deltaAngle);
+//void computePos(float deltaMoveX, float deltaMoveY);
+//void moveForward();
+void GLUTRedraw(void);
+void GLUTKeyboard(unsigned char key, int xx, int yy);
+void GLUTSpecial(int key, int xx, int yy);
 void releaseKey(int key, int x, int y);
 
 
