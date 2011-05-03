@@ -1,19 +1,20 @@
 #include "GlutTest.h"
 #include "R3/R3.h"
-#include "R3Mesh.h"
+#include "R3Scene.h"
 
 using namespace std;
 
 // Arguments
-static char *input_mesh_name = "../art/level1.off";
+static char *input_scene_name = "../art/level1.scn";
 
 // Display Variables
 // use these, throw the stuff below away
-static R3Mesh *mesh = NULL;
-static R3Point camera_eye(0, 0, 4);
-static R3Vector camera_towards(0, 0, 1);
-static R3Vector camera_up(0, 1, 0);
-static double camera_yfov = 0.75;
+static R3Scene *scene = NULL;
+static R3Camera camera;
+
+// GLUT variables
+static int GLUTwindow_height = 800;
+static int GLUTwindow_width = 800;
 
 // texture variables
 GLuint texBrick;
@@ -33,7 +34,7 @@ float deltaMoveX = 0, deltaMoveY = 0;
 float angle = 0.0f;
 float deltaAngle = 0.0f;
 
-void changeSize(int w, int h) {
+void GLUTResize(int w, int h) {
 
 	// Prevent a divide by zero, when window is too short
 	// (you cant make a window of zero width).
@@ -57,178 +58,415 @@ void changeSize(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-// code adapted from http://www.opengl.org/resources/libraries/glut/ 
-// changed the make box function to include the texure
-static void drawBrickBox(GLfloat size, GLenum type)
+
+
+void DrawShape(R3Shape *shape)
 {
-  static GLfloat n[6][3] =
-  {
-    {-1.0, 0.0, 0.0},
-    {0.0, 1.0, 0.0},
-    {1.0, 0.0, 0.0},
-    {0.0, -1.0, 0.0},
-    {0.0, 0.0, 1.0},
-    {0.0, 0.0, -1.0}
-  };
-  static GLint faces[6][4] =
-  {
-    {0, 1, 2, 3},
-    {3, 2, 6, 7},
-    {7, 6, 5, 4},
-    {4, 5, 1, 0},
-    {5, 6, 2, 1},
-    {7, 4, 0, 3}
-  };
-  GLfloat v[8][3];
-  GLint i;
+  // Check shape type
+  if (shape->type == R3_BOX_SHAPE) shape->box->Draw();
+  else if (shape->type == R3_SPHERE_SHAPE) shape->sphere->Draw();
+  else if (shape->type == R3_CYLINDER_SHAPE) shape->cylinder->Draw();
+  else if (shape->type == R3_CONE_SHAPE) shape->cone->Draw();
+  else if (shape->type == R3_MESH_SHAPE) shape->mesh->Draw();
+  else if (shape->type == R3_SEGMENT_SHAPE) shape->segment->Draw();
+  else fprintf(stderr, "Unrecognized shape type: %d\n", shape->type);
+}
 
-  v[0][0] = v[1][0] = v[2][0] = v[3][0] = -size / 2;
-  v[4][0] = v[5][0] = v[6][0] = v[7][0] = size / 2;
-  v[0][1] = v[1][1] = v[4][1] = v[5][1] = -size / 2;
-  v[2][1] = v[3][1] = v[6][1] = v[7][1] = size / 2;
-  v[0][2] = v[3][2] = v[4][2] = v[7][2] = -size / 2;
-  v[1][2] = v[2][2] = v[5][2] = v[6][2] = size / 2;
 
-	glBindTexture(GL_TEXTURE_2D, texBrick);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glColor3f(1.0f, 1.0f, 1.0f);
 
-  for (i = 5; i >= 0; i--) {
-    glBegin(type);
-    glNormal3fv(&n[i][0]);
-	glTexCoord2f(0.0f, 0.0f);
-    glVertex3fv(&v[faces[i][0]][0]);
-	glTexCoord2f(0.0f, 1.0f);
-    glVertex3fv(&v[faces[i][1]][0]);
-	glTexCoord2f(1.0f, 1.0f);
-    glVertex3fv(&v[faces[i][2]][0]);
-	glTexCoord2f(1.0f, 0.0f);
-    glVertex3fv(&v[faces[i][3]][0]);
-    glEnd();
+void LoadMatrix(R3Matrix *matrix)
+{
+  // Multiply matrix by top of stack
+  // Take transpose of matrix because OpenGL represents vectors with 
+  // column-vectors and R3 represents them with row-vectors
+  R3Matrix m = matrix->Transpose();
+  glMultMatrixd((double *) &m);
+}
+
+
+
+void LoadMaterial(R3Material *material) 
+{
+  GLfloat c[4];
+
+  // Check if same as current
+  static R3Material *current_material = NULL;
+  if (material == current_material) return;
+  current_material = material;
+
+  // Compute "opacity"
+  double opacity = 1 - material->kt.Luminance();
+
+  // Load ambient
+  c[0] = material->ka[0];
+  c[1] = material->ka[1];
+  c[2] = material->ka[2];
+  c[3] = opacity;
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, c);
+
+  // Load diffuse
+  c[0] = material->kd[0];
+  c[1] = material->kd[1];
+  c[2] = material->kd[2];
+  c[3] = opacity;
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, c);
+
+  // Load specular
+  c[0] = material->ks[0];
+  c[1] = material->ks[1];
+  c[2] = material->ks[2];
+  c[3] = opacity;
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, c);
+
+  // Load emission
+  c[0] = material->emission.Red();
+  c[1] = material->emission.Green();
+  c[2] = material->emission.Blue();
+  c[3] = opacity;
+  glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, c);
+
+  // Load shininess
+  c[0] = material->shininess;
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, c[0]);
+
+  // Load texture
+  if (material->texture) {
+    if (material->texture_index <= 0) {
+      // Create texture in OpenGL
+      GLuint texture_index;
+      glGenTextures(1, &texture_index);
+      material->texture_index = (int) texture_index;
+      glBindTexture(GL_TEXTURE_2D, material->texture_index); 
+      R2Image *image = material->texture;
+      int npixels = image->NPixels();
+      R2Pixel *pixels = image->Pixels();
+      GLfloat *buffer = new GLfloat [ 4 * npixels ];
+      R2Pixel *pixelsp = pixels;
+      GLfloat *bufferp = buffer;
+      for (int j = 0; j < npixels; j++) { 
+        *(bufferp++) = pixelsp->Red();
+        *(bufferp++) = pixelsp->Green();
+        *(bufferp++) = pixelsp->Blue();
+        *(bufferp++) = pixelsp->Alpha();
+        pixelsp++;
+      }
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      glTexImage2D(GL_TEXTURE_2D, 0, 4, image->Width(), image->Height(), 0, GL_RGBA, GL_FLOAT, buffer);
+      delete [] buffer;
+    }
+
+    // Select texture
+    glBindTexture(GL_TEXTURE_2D, material->texture_index); 
+    glEnable(GL_TEXTURE_2D);
   }
-}
+  else {
+    glDisable(GL_TEXTURE_2D);
+  }
 
-// complementing the above function
-void glutSolidBrickCube(GLdouble size)
-{
-  drawBrickBox(size, GL_QUADS);
-}
-
-void drawBuilding() {
-
-	glTranslatef(0.0f ,0.0f, 0.0f);
-	glutSolidBrickCube(1.0f);
-
+  // Enable blending for transparent surfaces
+  if (opacity < 1) {
+    glDepthMask(false);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+  }
+  else {
+    glDisable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ZERO);
+    glDepthMask(true);
+  }
 }
 
 //Makes the image into a texture, and returns the id of the texture
 GLuint loadTexture(Image* image) {
-	GLuint textureId;
-	glGenTextures(1, &textureId); //Make room for our texture
-	glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
-	//Map the image to the texture
-	glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
-				 0,                            //0 for now
-				 GL_RGB,                       //Format OpenGL uses for image
-				 image->width, image->height,  //Width and height
-				 0,                            //The border of the image
-				 GL_RGB, //GL_RGB, because pixels are stored in RGB format
-				 GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
-				                   //as unsigned numbers
-				 image->pixels);               //The actual pixel data
-	return textureId; //Returns the id of the texture
+  GLuint textureId;
+  glGenTextures(1, &textureId); //Make room for our texture
+  glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
+  //Map the image to the texture
+  glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
+	       0,                            //0 for now
+	       GL_RGB,                       //Format OpenGL uses for image
+	       image->width, image->height,  //Width and height
+	       0,                            //The border of the image
+	       GL_RGB, //GL_RGB, because pixels are stored in RGB format
+	       GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
+	       //as unsigned numbers
+	       image->pixels);               //The actual pixel data
+  return textureId; //Returns the id of the texture
 }
 
-void computeDir(float deltaAngle) {
+void LoadCamera(R3Camera *camera)
+{
+  // Set projection transformation
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(2*180.0*camera->yfov/M_PI, (GLdouble) GLUTwindow_width /(GLdouble) GLUTwindow_height, 0.01, 10000);
 
-	angle += deltaAngle;
-	if (angle > .02f)
-		angle = .02f;
-	if (angle < -.02f)
-		angle = -.02f;
-
-	lx = sin(angle);
-	lz = -cos(angle);
+  // Set camera transformation
+  R3Vector t = -(camera->towards);
+  R3Vector& u = camera->up;
+  R3Vector& r = camera->right;
+  GLdouble camera_matrix[16] = { r[0], u[0], t[0], 0, r[1], u[1], t[1], 0, r[2], u[2], t[2], 0, 0, 0, 0, 1 };
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glMultMatrixd(camera_matrix);
+  glTranslated(-(camera->eye[0]), -(camera->eye[1]), -(camera->eye[2]));
 }
 
-void computePos(float deltaMoveX, float deltaMoveY) {
 
-	x += deltaMoveX;
-	y += deltaMoveY;
 
+void LoadLights(R3Scene *scene)
+{
+  GLfloat buffer[4];
+
+  // Load ambient light
+  static GLfloat ambient[4];
+  ambient[0] = scene->ambient[0];
+  ambient[1] = scene->ambient[1];
+  ambient[2] = scene->ambient[2];
+  ambient[3] = 1;
+  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+
+  // Load scene lights
+  for (int i = 0; i < (int) scene->lights.size(); i++) {
+    R3Light *light = scene->lights[i];
+    int index = GL_LIGHT0 + i;
+
+    // Temporarily disable light
+    glDisable(index);
+
+    // Load color
+    buffer[0] = light->color[0];
+    buffer[1] = light->color[1];
+    buffer[2] = light->color[2];
+    buffer[3] = 1.0;
+    glLightfv(index, GL_DIFFUSE, buffer);
+    glLightfv(index, GL_SPECULAR, buffer);
+
+    // Load attenuation with distance
+    buffer[0] = light->constant_attenuation;
+    buffer[1] = light->linear_attenuation;
+    buffer[2] = light->quadratic_attenuation;
+    glLightf(index, GL_CONSTANT_ATTENUATION, buffer[0]);
+    glLightf(index, GL_LINEAR_ATTENUATION, buffer[1]);
+    glLightf(index, GL_QUADRATIC_ATTENUATION, buffer[2]);
+
+    // Load spot light behavior
+    buffer[0] = 180.0 * light->angle_cutoff / M_PI;
+    buffer[1] = light->angle_attenuation;
+    glLightf(index, GL_SPOT_CUTOFF, buffer[0]);
+    glLightf(index, GL_SPOT_EXPONENT, buffer[1]);
+
+    // Load positions/directions
+    if (light->type == R3_DIRECTIONAL_LIGHT) {
+      // Load direction
+      buffer[0] = -(light->direction.X());
+      buffer[1] = -(light->direction.Y());
+      buffer[2] = -(light->direction.Z());
+      buffer[3] = 0.0;
+      glLightfv(index, GL_POSITION, buffer);
+    }
+    else if (light->type == R3_POINT_LIGHT) {
+      // Load position
+      buffer[0] = light->position.X();
+      buffer[1] = light->position.Y();
+      buffer[2] = light->position.Z();
+      buffer[3] = 1.0;
+      glLightfv(index, GL_POSITION, buffer);
+    }
+    else if (light->type == R3_SPOT_LIGHT) {
+      // Load position
+      buffer[0] = light->position.X();
+      buffer[1] = light->position.Y();
+      buffer[2] = light->position.Z();
+      buffer[3] = 1.0;
+      glLightfv(index, GL_POSITION, buffer);
+
+      // Load direction
+      buffer[0] = light->direction.X();
+      buffer[1] = light->direction.Y();
+      buffer[2] = light->direction.Z();
+      buffer[3] = 1.0;
+      glLightfv(index, GL_SPOT_DIRECTION, buffer);
+    }
+    else if (light->type == R3_AREA_LIGHT) {
+      // Load position
+      buffer[0] = light->position.X();
+      buffer[1] = light->position.Y();
+      buffer[2] = light->position.Z();
+      buffer[3] = 1.0;
+      glLightfv(index, GL_POSITION, buffer);
+
+      // Load direction
+      buffer[0] = light->direction.X();
+      buffer[1] = light->direction.Y();
+      buffer[2] = light->direction.Z();
+      buffer[3] = 1.0;
+      glLightfv(index, GL_SPOT_DIRECTION, buffer);
+    }
+     else {
+      fprintf(stderr, "Unrecognized light type: %d\n", light->type);
+      return;
+    }
+
+    // Enable light
+    glEnable(index);
+  }
 }
 
-// move forward with a constant speed
-void moveForward() {
-	z -= 0.01f;
+
+
+void DrawNode(R3Scene *scene, R3Node *node)
+{
+  // Push transformation onto stack
+  glPushMatrix();
+  LoadMatrix(&node->transformation);
+
+  // Load material
+  if (node->material) LoadMaterial(node->material);
+
+  // Draw shape
+  if (node->shape) DrawShape(node->shape);
+
+  // Draw children nodes
+  for (int i = 0; i < (int) node->children.size(); i++) 
+    DrawNode(scene, node->children[i]);
+
+  // Restore previous transformation
+  glPopMatrix();
 }
 
-void renderScene(void) {
 
-  //moveForward();
 
-	if (deltaMoveX || deltaMoveY)
-		computePos(deltaMoveX, deltaMoveY);
+void DrawLights(R3Scene *scene)
+{
+  // Check if should draw lights
 
-	if (deltaAngle)
-		computeDir(deltaAngle);
+  // Setup
+  GLboolean lighting = glIsEnabled(GL_LIGHTING);
+  glDisable(GL_LIGHTING);
 
-	// Clear Color and Depth Buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // Draw all lights
+  double radius = scene->bbox.DiagonalRadius();
+  for (int i = 0; i < scene->NLights(); i++) {
+    R3Light *light = scene->Light(i);
+    glColor3d(light->color[0], light->color[1], light->color[2]);
+    if (light->type == R3_DIRECTIONAL_LIGHT) {
+      // Draw direction vector
+      glLineWidth(5);
+      glBegin(GL_LINES);
+      R3Point centroid = scene->bbox.Centroid();
+      R3Vector vector = radius * light->direction;
+      glVertex3d(centroid[0] - vector[0], centroid[1] - vector[1], centroid[2] - vector[2]);
+      glVertex3d(centroid[0] - 1.25*vector[0], centroid[1] - 1.25*vector[1], centroid[2] - 1.25*vector[2]);
+      glEnd();
+      glLineWidth(1);
+    }
+    else if (light->type == R3_POINT_LIGHT) {
+      // Draw sphere at point light position
+      R3Sphere(light->position, 0.1 * radius).Draw();
+    }
+    else if (light->type == R3_SPOT_LIGHT) {
+      // Draw sphere at point light position and line indicating direction
+      R3Sphere(light->position, 0.1 * radius).Draw();
+  
+      // Draw direction vector
+      glLineWidth(5);
+      glBegin(GL_LINES);
+      R3Vector vector = radius * light->direction;
+      glVertex3d(light->position[0], light->position[1], light->position[2]);
+      glVertex3d(light->position[0] + 0.25*vector[0], light->position[1] + 0.25*vector[1], light->position[2] + 0.25*vector[2]);
+      glEnd();
+      glLineWidth(1);
+    }
+    else if (light->type == R3_AREA_LIGHT) {
+      // Draw circular area
+      R3Vector v1, v2;
+      double r = light->radius;
+      R3Point p = light->position;
+      int dim = light->direction.MinDimension();
+      if (dim == 0) { v1 = light->direction % R3posx_vector; v1.Normalize(); v2 = light->direction % v1; }
+      else if (dim == 1) { v1 = light->direction % R3posy_vector; v1.Normalize(); v2 = light->direction % v1; }
+      else { v1 = light->direction % R3posz_vector; v1.Normalize(); v2 = light->direction % v1; }
+      glBegin(GL_POLYGON);
+      glVertex3d(p[0] +  1.00*r*v1[0] +  0.00*r*v2[0], p[1] +  1.00*r*v1[1] +  0.00*r*v2[1], p[2] +  1.00*r*v1[2] +  0.00*r*v2[2]);
+      glVertex3d(p[0] +  0.71*r*v1[0] +  0.71*r*v2[0], p[1] +  0.71*r*v1[1] +  0.71*r*v2[1], p[2] +  0.71*r*v1[2] +  0.71*r*v2[2]);
+      glVertex3d(p[0] +  0.00*r*v1[0] +  1.00*r*v2[0], p[1] +  0.00*r*v1[1] +  1.00*r*v2[1], p[2] +  0.00*r*v1[2] +  1.00*r*v2[2]);
+      glVertex3d(p[0] + -0.71*r*v1[0] +  0.71*r*v2[0], p[1] + -0.71*r*v1[1] +  0.71*r*v2[1], p[2] + -0.71*r*v1[2] +  0.71*r*v2[2]);
+      glVertex3d(p[0] + -1.00*r*v1[0] +  0.00*r*v2[0], p[1] + -1.00*r*v1[1] +  0.00*r*v2[1], p[2] + -1.00*r*v1[2] +  0.00*r*v2[2]);
+      glVertex3d(p[0] + -0.71*r*v1[0] + -0.71*r*v2[0], p[1] + -0.71*r*v1[1] + -0.71*r*v2[1], p[2] + -0.71*r*v1[2] + -0.71*r*v2[2]);
+      glVertex3d(p[0] +  0.00*r*v1[0] + -1.00*r*v2[0], p[1] +  0.00*r*v1[1] + -1.00*r*v2[1], p[2] +  0.00*r*v1[2] + -1.00*r*v2[2]);
+      glVertex3d(p[0] +  0.71*r*v1[0] + -0.71*r*v2[0], p[1] +  0.71*r*v1[1] + -0.71*r*v2[1], p[2] +  0.71*r*v1[2] + -0.71*r*v2[2]);
+      glEnd();
+    }
+    else {
+      fprintf(stderr, "Unrecognized light type: %d\n", light->type);
+      return;
+    }
+  }
 
-	// Reset transformations
-	glLoadIdentity();
-	// Set the camera
-	gluLookAt(	x, y, z,
-				x+lx, y+ly,  z+lz,
-				0.0f, 1.0f,  0.0f);
-
-	// set background
-	glClearColor(0.53f, 0.8f, 0.98f, 1.0f);
-
-	// Draw ground
-	glColor3f(0.0f, 0.4f, 0.0f);
-	glBegin(GL_QUADS);
-		glVertex3f(-100.0f, 0.0f, -1000.0f);
-		glVertex3f(-100.0f, 0.0f,  100.0f);
-		glVertex3f( 100.0f, 0.0f,  100.0f);
-		glVertex3f( 100.0f, 0.0f, -1000.0f);
-	glEnd();
-
-	// Draw Buildings
-	for(int i=-30; i < 0; i++) {
-		glPushMatrix();
-		glTranslatef(-5.0,0.5,i * 10.0);
-		drawBuilding();
-		glPopMatrix();
-		glPushMatrix();
-		glTranslatef(-5.0,1.5,i * 10.0);
-		drawBuilding();
-		glPopMatrix();
-	}
-	for(int i=-30; i < 0; i++) {
-		glPushMatrix();
-		glTranslatef(5.0,0.5,i * 10.0);
-		drawBuilding();
-		glPopMatrix();
-		glPushMatrix();
-		glTranslatef(5.0,1.5,i * 10.0);
-		drawBuilding();
-		glPopMatrix();
-	}
-
-	glutSwapBuffers();
+  // Clean up
+  if (lighting) glEnable(GL_LIGHTING);
 }
 
-void processNormalKeys(unsigned char key, int xx, int yy) {
+
+void DrawScene(R3Scene *scene) 
+{
+  // Draw nodes recursively
+  DrawNode(scene, scene->root);
+}
+
+void GLUTRedraw(void) {
+  // Initialize OpenGL drawing modes
+  glEnable(GL_LIGHTING);
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ZERO);
+  glDepthMask(true);
+
+  // Clear window 
+  R3Rgb background = scene->background;
+  glClearColor(background[0], background[1], background[2], background[3]);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  // Load camera
+  LoadCamera(&camera);
+
+  // Load scene lights
+  LoadLights(scene);
+
+  // Draw scene camera
+  //DrawCamera(scene);
+
+  // Draw scene lights
+  DrawLights(scene);
+
+  // Draw scene surfaces
+  glEnable(GL_LIGHTING);
+  DrawScene(scene);
+  
+
+  // Draw scene edges
+  glDisable(GL_LIGHTING);
+  glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  DrawScene(scene);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  
+  glutSwapBuffers();
+ 
+}
+
+void GLUTKeyboard(unsigned char key, int xx, int yy) {
 
 	// escape
 	if (key == 27)
 		exit(0);
 }
 
-void pressKey(int key, int xx, int yy) {
+void GLUTSpecial(int key, int xx, int yy) {
 
 	switch (key) {
 		case GLUT_KEY_LEFT : deltaMoveX = -0.01f; deltaAngle = -0.001f; break;
@@ -262,17 +500,17 @@ void GLUTInit(int *argc, char **argv) {
   glutInit(argc, argv);
   glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
   glutInitWindowPosition(100,100);
-  glutInitWindowSize(320,320);
+  glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
   glutCreateWindow("StarFox");
   
   // register callbacks
-  glutDisplayFunc(renderScene);
-  glutReshapeFunc(changeSize);
-  glutIdleFunc(renderScene);
+  glutDisplayFunc(GLUTRedraw);
+  glutReshapeFunc(GLUTResize);
+  glutIdleFunc(GLUTRedraw);
   
   // handlers
-  glutKeyboardFunc(processNormalKeys);
-  glutSpecialFunc(pressKey);
+  glutKeyboardFunc(GLUTKeyboard);
+  glutSpecialFunc(GLUTSpecial);
   
   // here are the new entries
   glutIgnoreKeyRepeat(1);
@@ -294,8 +532,33 @@ void GLUTInit(int *argc, char **argv) {
 
 // Riley
 // More organizational stuff
+// Just in case we want it to be more complex later
 void GLUTMainLoop() {
   glutMainLoop();
+}
+
+// Riley
+// Reading the scene
+R3Scene *
+ReadScene(const char *filename) {
+  // Allocate scene
+  R3Scene *scene = new R3Scene();
+  if (!scene) {
+    fprintf(stderr, "Unable to allocate scene\n");
+    return NULL;
+  }
+
+  // Read file
+  if (!scene->Read(filename)) {
+    fprintf(stderr, "Unable to read scene from %s\n", filename);
+    return NULL;
+  }
+
+  // Remember initial camera
+  camera = scene->camera;
+
+  // Return scene
+  return scene;
 }
 
 int main(int argc, char **argv) {
@@ -304,18 +567,9 @@ int main(int argc, char **argv) {
   // enter GLUT event processing cycle
 
   // Allocate mesh
-  mesh = new R3Mesh();
-  if(!mesh) {
-    fprintf(stderr, "Unable to allocate mesh\n");
-    exit(-1);
-  }
+  scene = ReadScene(input_scene_name);
+  if(!scene) exit(-1);
    
-  // Read mesh
-  if(!mesh->Read(input_mesh_name)) {
-    fprintf(stderr, "Unable to read mesh from %s\n", input_mesh_name);
-    exit(-1);
-  }
-
   GLUTMainLoop();
 
   return 0;
