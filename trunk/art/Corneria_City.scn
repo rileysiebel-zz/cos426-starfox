@@ -1,0 +1,17 @@
+begin
+ -1
+ 1 0 0 0
+ 0 1 0 10
+ 0 0 1 0
+ 0 0 0 1
+ include T-building.scn
+end
+
+begin
+ -1
+ 1 0 0 0
+ 0 1 0 0
+ 0 0 1 0
+ 0 0 0 1
+ include T-building.scn
+end

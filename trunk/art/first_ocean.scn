@@ -1,0 +1,41 @@
+#floor
+box
+ -1
+ -10 -10 -1
+ 10 10 1
+
+#left
+begin -1
+  0 1 0 -10
+  -1 0 0 0
+  0 0 1 0
+  0 0 0 1
+  include wall.scn
+end
+
+#right
+begin -1
+ 0 1 0 10
+ -1 0 0 0
+ 0 0 1 0
+ 0 0 0 1
+ include wall.scn
+end
+
+#left door
+begin -1
+ 0.2 0 0 -8
+ 0 1 0 10
+ 0 0 1 0
+ 0 0 0 1
+ include wall.scn
+end
+
+#right door
+begin -1
+ 0.2 0 0 8
+ 0 1 0 10
+ 0 0 1 0
+ 0 0 0 1
+ include wall.scn
+end
