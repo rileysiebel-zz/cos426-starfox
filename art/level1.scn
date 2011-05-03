@@ -1,0 +1,24 @@
+camera 0 -25 15  0 2 -1  0 1 2  0.5 0.1 100
+
+ambient 1 1 1
+
+include first_ocean.scn
+
+begin -1
+  1 0 0 0
+  0 1 0 20
+  0 0 1 0
+  0 0 0 1
+  include canyon.scn
+end
+
+#begin -1
+# 1 0 0 0 
+# 0 1 0 40 
+# 0 0 1 0 
+# 0 0 0 1
+# include Corneria_City.scn
+#end
+
+#include N-building.scn
+#include T-building.scn
