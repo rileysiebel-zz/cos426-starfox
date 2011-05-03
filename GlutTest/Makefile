@@ -1,7 +1,7 @@
 # 
 # List of source files
 #
-MESHVIEW_SRCS=GlutTest.cpp
+MESHVIEW_SRCS=GlutTest.cpp R3Mesh.cpp
 MESHVIEW_OBJS=$(MESHVIEW_SRCS:.cpp=.o)
 
 
@@ -33,8 +33,8 @@ endif
 # Compile command
 #
 
-#%.o: %.cpp R3Mesh.h
-#	    $(CC) $(CPPFLAGS) -c $< -o $@
+%.o: %.cpp R3Mesh.h
+	    $(CXX) $(CXXFLAGS) -c $< -o $@
 
 #
 # GNU Make: targets that don't build files
@@ -51,9 +51,15 @@ endif
 # on its corresponding .cpp), as are many of the compilation rules.
 #
 
-LIBS=jpeg/libjpeg.a
+LIBS=jpeg/libjpeg.a R3/libR3.a R2/libR2.a
 
 all: meshview
+
+R3/libR3.a: 
+	    $(MAKE) -C R3
+
+R2/libR2.a: 
+	    $(MAKE) -C R2
 
 jpeg/libjpeg.a: 
 	    $(MAKE) -C jpeg
@@ -64,3 +70,6 @@ meshview: $(LIBS) $(MESHVIEW_OBJS)
 
 clean: 
 	rm -f *.o meshpro meshview
+	$(MAKE) -C R3 clean
+	$(MAKE) -C R2 clean
+	$(MAKE) -C jpeg clean

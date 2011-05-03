@@ -1,6 +1,19 @@
 #include "GlutTest.h"
+#include "R3/R3.h"
+#include "R3Mesh.h"
 
 using namespace std;
+
+// Arguments
+static char *input_mesh_name = "../art/level1.off";
+
+// Display Variables
+// use these, throw the stuff below away
+static R3Mesh *mesh = NULL;
+static R3Point camera_eye(0, 0, 4);
+static R3Vector camera_towards(0, 0, 1);
+static R3Vector camera_up(0, 1, 0);
+static double camera_yfov = 0.75;
 
 // texture variables
 GLuint texBrick;
@@ -153,7 +166,7 @@ void moveForward() {
 
 void renderScene(void) {
 
-	moveForward();
+  //moveForward();
 
 	if (deltaMoveX || deltaMoveY)
 		computePos(deltaMoveX, deltaMoveY);
@@ -241,46 +254,71 @@ void releaseKey(int key, int x, int y) {
 	}
 }
 
-int main(int argc, char **argv) {
 
-	// init GLUT and create window
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(100,100);
-	glutInitWindowSize(320,320);
-	glutCreateWindow("StarFox");
-
-	// register callbacks
-	glutDisplayFunc(renderScene);
-	glutReshapeFunc(changeSize);
-	glutIdleFunc(renderScene);
-
-	// handlers
-	glutKeyboardFunc(processNormalKeys);
-	glutSpecialFunc(pressKey);
-
-	// here are the new entries
-	glutIgnoreKeyRepeat(1);
-	glutSpecialUpFunc(releaseKey);
-
-	// OpenGL init
-	glEnable(GL_DEPTH_TEST);
-
-	// texturing
-/*	Image* image = loadBMP("images\\brick.bmp");
+// Riley added this, just took some stuff out of main
+// for organizational purposes
+void GLUTInit(int *argc, char **argv) {
+   // init GLUT and create window
+  glutInit(argc, argv);
+  glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+  glutInitWindowPosition(100,100);
+  glutInitWindowSize(320,320);
+  glutCreateWindow("StarFox");
+  
+  // register callbacks
+  glutDisplayFunc(renderScene);
+  glutReshapeFunc(changeSize);
+  glutIdleFunc(renderScene);
+  
+  // handlers
+  glutKeyboardFunc(processNormalKeys);
+  glutSpecialFunc(pressKey);
+  
+  // here are the new entries
+  glutIgnoreKeyRepeat(1);
+  glutSpecialUpFunc(releaseKey);
+  
+  // OpenGL init
+  glEnable(GL_DEPTH_TEST);
+  // texturing
+  /*	Image* image = loadBMP("images\\brick.bmp");
 	texBrick = loadTexture(image);
 	delete image;
-
+	
 	image = loadBMP("images\\stone.bmp");
 	texStone = loadTexture(image);
 	delete image; */
 
-	glEnable(GL_TEXTURE_2D);
+  glEnable(GL_TEXTURE_2D);
+}
 
-	// enter GLUT event processing cycle
-	glutMainLoop();
+// Riley
+// More organizational stuff
+void GLUTMainLoop() {
+  glutMainLoop();
+}
 
-	return 0;
+int main(int argc, char **argv) {
+
+  GLUTInit(&argc, argv);
+  // enter GLUT event processing cycle
+
+  // Allocate mesh
+  mesh = new R3Mesh();
+  if(!mesh) {
+    fprintf(stderr, "Unable to allocate mesh\n");
+    exit(-1);
+  }
+   
+  // Read mesh
+  if(!mesh->Read(input_mesh_name)) {
+    fprintf(stderr, "Unable to read mesh from %s\n", input_mesh_name);
+    exit(-1);
+  }
+
+  GLUTMainLoop();
+
+  return 0;
 }
 
 
