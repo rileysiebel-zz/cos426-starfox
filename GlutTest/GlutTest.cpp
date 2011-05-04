@@ -16,23 +16,44 @@ static R3Camera camera;
 static int GLUTwindow_height = 800;
 static int GLUTwindow_width = 800;
 
+// START: Varaibles by Awais
+
+// this is Arwing
+R3Mesh *ship;
+
 // texture variables
 GLuint texBrick;
 GLuint texStone;
 
 // camera direction
-float lx=0.0f,ly=0.0f,lz=-1.0f;
-
+float lx,ly,lz;
 // XYZ position of the camera
-float x=0.0f, y=1.0f, z=-5.0f;
+float x,y,z;
 
 // the key states. These variables will be zero when no key is being presses
-float deltaMoveX = 0, deltaMoveY = 0;
+float deltaMoveX = 0, deltaMoveZ = 0;
+float moveStep = 0.1; // left-right move speed
 
 // angles
 // angle of rotation for the camera direction
-float angle = 0.0f;
-float deltaAngle = 0.0f;
+float angleLR = 0.0f;
+float deltaAngleLR = 0.0f;
+float angleUD = 0.0f;
+float deltaAngleUD = 0.0f;
+
+bool rightAngle=false, leftAngle=false; 
+bool upAngle=false, downAngle=false;
+
+float angleStep = 0.01;
+float angleCutOff = 0.2;
+
+// rotation
+float rotationAngle = 0.0;
+
+// speed varibales
+float cameraSpeed = 0.1;
+float shipSpeed = 0.1;
+// END: Variables by Awais
 
 void DrawShape(R3Shape *shape)
 {
@@ -154,23 +175,6 @@ void LoadMaterial(R3Material *material)
   }
 }
 
-//Makes the image into a texture, and returns the id of the texture
-GLuint loadTexture(Image* image) {
-  GLuint textureId;
-  glGenTextures(1, &textureId); //Make room for our texture
-  glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
-  //Map the image to the texture
-  glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
-	       0,                            //0 for now
-	       GL_RGB,                       //Format OpenGL uses for image
-	       image->width, image->height,  //Width and height
-	       0,                            //The border of the image
-	       GL_RGB, //GL_RGB, because pixels are stored in RGB format
-	       GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
-	       //as unsigned numbers
-	       image->pixels);               //The actual pixel data
-  return textureId; //Returns the id of the texture
-}
 
 void LoadCamera(R3Camera *camera)
 {
@@ -180,17 +184,12 @@ void LoadCamera(R3Camera *camera)
   gluPerspective(2*180.0*camera->yfov/M_PI, (GLdouble) GLUTwindow_width /(GLdouble) GLUTwindow_height, 0.01, 10000);
 
   // Set camera transformation
-  R3Vector t = -(camera->towards);
-  R3Vector& u = camera->up;
-  R3Vector& r = camera->right;
-  GLdouble camera_matrix[16] = { r[0], u[0], t[0], 0, r[1], u[1], t[1], 0, r[2], u[2], t[2], 0, 0, 0, 0, 1 };
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glMultMatrixd(camera_matrix);
-  glTranslated(-(camera->eye[0]), -(camera->eye[1]), -(camera->eye[2]));
+  gluLookAt(x, y, z,
+			x+lx, y+ly,  z+lz,
+			0, 1,  0); 
 }
-
-
 
 void LoadLights(R3Scene *scene)
 {
@@ -420,6 +419,32 @@ void GLUTResize(int w, int h) {
 }
 
 void GLUTRedraw(void) {
+
+  // Awais
+  // move camera and the ship forward
+  moveForward();
+  updateShip();
+  // left-right-up-down movement in viewplane
+  if (deltaMoveX || deltaMoveZ)
+	computePos(deltaMoveX, deltaMoveZ);
+  // angle movement in LR direction
+  if (rightAngle)
+	  peakRight();
+  if (leftAngle)
+	  peakLeft();
+  if (!rightAngle && !leftAngle)
+	  lookStraightLR();
+  // angle movement in UD direction
+  if (upAngle)
+	  peakUp();
+  if (downAngle)
+	  peakDown();
+  if (!upAngle && !downAngle)
+	  lookStraightUD();
+
+  if (rotationAngle) 
+	  computeRotation();
+
   // Initialize OpenGL drawing modes
   glEnable(GL_LIGHTING);
   glDisable(GL_BLEND);
@@ -459,39 +484,186 @@ void GLUTRedraw(void) {
  
 }
 
-void GLUTKeyboard(unsigned char key, int xx, int yy) {
+// Awais
+//Makes the image into a texture, and returns the id of the texture
+GLuint loadTexture(Image* image) {
+  GLuint textureId;
+  glGenTextures(1, &textureId); //Make room for our texture
+  glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
+  //Map the image to the texture
+  glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
+	       0,                            //0 for now
+	       GL_RGB,                       //Format OpenGL uses for image
+	       image->width, image->height,  //Width and height
+	       0,                            //The border of the image
+	       GL_RGB, //GL_RGB, because pixels are stored in RGB format
+	       GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
+	       //as unsigned numbers
+	       image->pixels);               //The actual pixel data
+  return textureId; //Returns the id of the texture
+}
 
+// Awais
+// add any normal keyboard keys over here. Normal Keys are defined on glut pages
+void GLUTKeyboard(unsigned char key, int xx, int yy) {
 	// escape
 	if (key == 27)
 		exit(0);
+
 }
 
+// Awais
+// add any special keys over here. Special keys are defined on glut pages
 void GLUTSpecial(int key, int xx, int yy) {
 
 	switch (key) {
-		case GLUT_KEY_LEFT : deltaMoveX = -0.01f; deltaAngle = -0.001f; break;
-		case GLUT_KEY_RIGHT : deltaMoveX = 0.01f; deltaAngle = 0.001f; break;
-		case GLUT_KEY_UP : deltaMoveY = 0.01f; break;
-		case GLUT_KEY_DOWN : deltaMoveY = -0.01f; break;
+		case GLUT_KEY_LEFT : 
+			deltaMoveX = -moveStep;
+			leftAngle = true;
+			break;
+		case GLUT_KEY_RIGHT : 
+			deltaMoveX = moveStep; 
+			rightAngle = true;
+			break;
+		case GLUT_KEY_UP : 
+			deltaMoveZ = moveStep; 
+			upAngle = true;
+			break;
+		case GLUT_KEY_DOWN : 
+			deltaMoveZ = -moveStep;
+			downAngle = true;
+			break;
+		case GLUT_KEY_F1 :
+			rotationAngle = 0.01;
+			break;
+		case GLUT_KEY_F2 :
+			rotationAngle = -0.01;
+			break;
 	}
 }
 
+// Awais
+// release key tells what to do upon relese of a key
 void releaseKey(int key, int x, int y) {
 
 	switch (key) {
 		case GLUT_KEY_LEFT :
-		case GLUT_KEY_RIGHT : 
 			deltaMoveX = 0.0f; 
-			if (angle > 0)
-				deltaAngle = -0.001f; 
-			if (angle < 0)
-				deltaAngle = 0.001f;
+			leftAngle = false;
+			break;
+		case GLUT_KEY_RIGHT : 
+			deltaMoveX = 0.0f;
+			rightAngle = false;
 			break;
 		case GLUT_KEY_UP :
-		case GLUT_KEY_DOWN : deltaMoveY = 0; deltaAngle = 0.0f; break;
+			deltaMoveZ = 0;
+			upAngle = false;
+			break;
+		case GLUT_KEY_DOWN : 
+			deltaMoveZ = 0; 
+			downAngle = false;
+			break;
+		case GLUT_KEY_F1 :
+			rotationAngle = 0.0;
+			break;
+		case GLUT_KEY_F2 :
+			rotationAngle = 0.0;
+			break;
 	}
 }
 
+// Awais
+void computePos(float dx, float dz) {
+	x += deltaMoveX;
+	z += deltaMoveZ;	
+}
+// Below: fncitons for angle movement
+void lookStraightLR() {
+
+	if (angleLR > angleCutOff)
+		angleLR = angleCutOff;
+	if (angleLR < -angleCutOff)
+		angleLR = -angleCutOff;
+
+	if (angleLR > 0) {
+		deltaAngleLR = -angleStep;
+		angleLR += deltaAngleLR;
+		ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+	}
+	else if (angleLR < 0) {
+		deltaAngleLR = angleStep;
+		angleLR += deltaAngleLR;
+		ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+	}
+	else
+		deltaAngleLR = 0.0;
+}
+void lookStraightUD() {
+
+	if (angleUD > angleCutOff)
+		angleUD = angleCutOff;
+	if (angleUD < -angleCutOff)
+		angleUD = -angleCutOff;
+
+	if (angleUD > 0) {
+		deltaAngleUD = -angleStep;
+		angleUD += deltaAngleUD;
+		ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+	}
+	else if (angleUD < 0) {
+		deltaAngleUD = angleStep;
+		angleUD += deltaAngleUD;
+		ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+	}
+	else
+		deltaAngleUD = 0.0;
+}
+
+void peakRight() {
+	if (angleLR >= -angleCutOff) {
+		deltaAngleLR = -angleStep;
+		angleLR += deltaAngleLR;
+		ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+	}
+}
+void peakLeft() {
+	if (angleLR <= angleCutOff) {
+		deltaAngleLR = angleStep;
+		angleLR += deltaAngleLR;
+		ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+	}
+}
+
+void peakUp() {
+	if (angleUD <= angleCutOff) {
+		deltaAngleUD = angleStep;
+		angleUD += deltaAngleUD;
+		ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+	}
+}
+void peakDown() {
+	if (angleUD >= -angleCutOff) {
+		deltaAngleUD = -angleStep;
+		angleUD += deltaAngleUD;
+		ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+	}
+}
+
+//Awais
+// move forward with a constant speed
+void moveForward() {
+	y += cameraSpeed;
+}
+
+void computeRotation(void) {
+	ship->Rotate(rotationAngle,R3Line(ship->Center(), camera.up));
+}
+
+//Awais
+// movement for ship as camera moves
+void updateShip() {
+	ship->Translate(deltaMoveX,deltaMoveZ,-shipSpeed);
+}
 
 // Riley added this, just took some stuff out of main
 // for organizational purposes
@@ -556,6 +728,17 @@ ReadScene(const char *filename) {
 
   // Remember initial camera
   camera = scene->camera;
+
+  // Awais
+  // set the global variables from the camera
+  x = camera.eye.X();
+  y = camera.eye.Y();
+  z = camera.eye.Z();
+  lx = camera.towards.X();
+  ly = camera.towards.Y();
+  lz = camera.towards.Z();
+  // get the ship
+  ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
 
   // Return scene
   return scene;
