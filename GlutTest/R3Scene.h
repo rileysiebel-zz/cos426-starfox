@@ -86,7 +86,7 @@ struct R3Node {
 /* 
  * should this all be added as a separate source file? 
  * */
-struct Enemy {
+struct SFEnemy {
     R3Shape *shape;
     R3Material *material;
     R3Box bbox;
@@ -125,6 +125,8 @@ struct R3Scene {
   R3Node *Root(void) const;
   int NLights(void) const;
   R3Light *Light(int k) const;
+    int NEnemies(void) const;
+    SFEnemy *Enemy(int k) const;
   R3Camera& Camera(void);
   R3Box& BBox(void);
 
@@ -134,7 +136,7 @@ struct R3Scene {
  public:
   R3Node *root;
   vector<R3Light *> lights;
-    vector<Enemy *> enemies;
+    vector<SFEnemy *> enemies;
   R3Camera camera;
   R3Box bbox;
   R3Rgb background;
@@ -180,7 +182,7 @@ NEnemies(void) const
 
 
 
-inline R3Light *R3Scene::
+inline SFEnemy *R3Scene::
 Enemy(int k) const
 {
     // Return kth enemy
