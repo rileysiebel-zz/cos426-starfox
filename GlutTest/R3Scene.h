@@ -83,6 +83,36 @@ struct R3Node {
 };
 
 
+/* 
+ * should this all be added as a separate source file? 
+ * */
+struct Enemy {
+    R3Shape *shape;
+    R3Material *material;
+    R3Box bbox;
+    
+    int fixed;              //does this enemy move?
+    R3Point position;
+    R3Vector movementPath;  //direction of enemy's movement, if applicable
+    R3Vector towards;       //enemy's facing direction
+    
+    R3Point firingPosition; //source of projectiles
+    R3Vector firingPath;    //desired direction of projectile
+    
+    double firingRate;
+    double movementSpeed;
+    
+    double fov;             //(radians) breadth of enemy's vision
+    double firingSpread;    //(radians) breadth of enemy's firing range
+    
+    double projectileLength;
+};
+
+struct Projectile {
+    R3Segment *segment;
+    double power;
+};
+
 
 // Scene graph definition
 
@@ -104,6 +134,7 @@ struct R3Scene {
  public:
   R3Node *root;
   vector<R3Light *> lights;
+    vector<Enemy *> enemies;
   R3Camera camera;
   R3Box bbox;
   R3Rgb background;
@@ -137,6 +168,23 @@ Light(int k) const
 {
   // Return kth light
   return lights[k];
+}
+
+
+inline int R3Scene::
+NEnemies(void) const
+{
+    // Return number of enemies
+    return enemies.size();
+}
+
+
+
+inline R3Light *R3Scene::
+Enemy(int k) const
+{
+    // Return kth enemy
+    return enemies[k];
 }
 
 
