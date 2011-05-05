@@ -695,7 +695,7 @@ void updateEnemies(void)
         }
         
         //shoot (will change to a static rate in the future)
-        if ((int)GetTime() % 2 == 0)
+        if ((int)GetTime() % 20 == 0)
         {
             SFProjectile *proj = new SFProjectile();
             R3Vector projDir = (ship->Center() + shipSpeed * z) - enemy->position;
