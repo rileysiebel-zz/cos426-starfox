@@ -19,6 +19,8 @@ void GLUTResize(int w, int h);
 //void glutSolidBrickCube(GLdouble size);
 //void drawBuilding();
 GLuint loadTexture(Image* image);
+
+//ship movement and view functions
 void computeDir(float deltaAngle);
 void computePos(float deltaMoveX, float deltaMoveY);
 void moveForward(void);
@@ -30,12 +32,14 @@ void peakDown(void);
 void lookStraightLR(void);
 void lookStraightUD(void);
 void computeRotation(void);
+
+
+//enemy and projectile functions
+void updateEnemies(void);
+void updateProjectiles(void);
+
+
 void GLUTRedraw(void);
 void GLUTKeyboard(unsigned char key, int xx, int yy);
 void GLUTSpecial(int key, int xx, int yy);
 void releaseKey(int key, int x, int y);
-
-
-
-
-
