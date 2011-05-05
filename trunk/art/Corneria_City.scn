@@ -18,7 +18,7 @@ begin
   0 1 0 20
   0 0 1 1
   0 0 0 1
-  include T-building.scn
+  include T-building-turret.scn
 end
 
 begin
