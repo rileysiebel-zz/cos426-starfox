@@ -5,7 +5,7 @@ begin -1
   0 0 -1 -18
   0 1 0 9
   0 0 0 1
-  mesh -1 Arwing_001.off
+  arwing -1 Arwing_001.off
 end
 
 ambient 1 1 1
@@ -29,4 +29,7 @@ begin -1
 end
 
 
-
+turret 
+ -1
+ -4 -8 10
+ 4 0 12
