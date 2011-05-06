@@ -47,8 +47,12 @@ float deltaAngleUD = 0.0f;
 bool rightAngle=false, leftAngle=false; 
 bool upAngle=false, downAngle=false;
 
+
 float angleStep = 0.01;
 float angleCutOff = 0.2;
+
+bool front_intersection = false;
+R3Point ship_pos = R3Point(0,0,0);
 
 // rotation
 float rotationAngle = 0.0;
@@ -298,22 +302,83 @@ void LoadLights(R3Scene *scene)
 }
 
 
-
-void DrawNode(R3Scene *scene, R3Node *node)
+//Updated this to find when the ship is inside object bboxes
+//Also made method adjust node coordinates for transformations
+void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
 {
     // Push transformation onto stack
     glPushMatrix();
     LoadMatrix(&node->transformation);
-    
+	 //Update the transformation
+  	 transformation *= node->transformation;	
+	   
+	 //This shows how you would get the *proper* coordinates. 
+	 //YOU MUST APPLY THE TRANSFORMATION TO THE POINT FIRST.	
+	 //cout << (transformation * node->bbox.Centroid()).X() << endl;
+	
+	//Extract the ship's location (from inside a node)
+	 if (node->shape != NULL &&
+	 	  node->shape->mesh == ship)
+	 {
+		R3Point t = transformation * node->shape->mesh->Center();
+	 	ship_pos = t;
+	 }
+	 
+	 //Check to see if the ship is inside anything
+	 if (node->shape != NULL
+	 &&  node->shape->mesh != ship
+	 && ship_pos != R3Point(0,0,0))
+	 {
+	 	R3Point p = ship_pos;
+		R3Point c = R3Point(0,0,0);
+		//These are the bbox edge lengths divided by 2
+		double xmid = 0;
+		double ymid = 0;
+		double zmid = 0;
+		
+		//BBoxes are not explicit-- we have to compute them.
+		if (node->shape->mesh != NULL)
+		{
+		  c = transformation * node->shape->mesh->Center();
+		  xmid = node->shape->mesh->Radius();
+		  ymid = node->shape->mesh->Radius();
+		  zmid = node->shape->mesh->Radius();
+		}
+		else if (node->shape->box != NULL)
+		{
+		  c = transformation * node->shape->box->Centroid();
+		  xmid = (node->shape->box->XMax() - node->shape->box->XMin())/2;
+		  ymid = (node->shape->box->YMax() - node->shape->box->YMin())/2;
+		  zmid = (node->shape->box->ZMax() - node->shape->box->ZMin())/2;
+		}
+		else if (node->shape->cylinder != NULL)
+		{
+		  c = transformation * node->shape->cylinder->Center();
+		  xmid = node->shape->cylinder->Radius();
+		  ymid = node->shape->cylinder->Radius();
+		  zmid = node->shape->cylinder->Height();
+		}
+		//Check if we have an intersection and set the right boolean
+	 	if (p.Z() < c.Z() + zmid && p.Z() > c.Z() - zmid
+      &&  p.Y() < c.Y() + ymid && p.Y() > c.Y() - ymid
+      &&  p.X() < c.X() + xmid && p.X() > c.X() - xmid)
+		{
+			front_intersection = true;
+		}
+		
+	 }
+	 
     // Load material
     if (node->material) LoadMaterial(node->material);
     
     // Draw shape
-    if (node->shape) DrawShape(node->shape);
-    
+    if (node->shape) DrawShape(node->shape); 
+	 
     // Draw children nodes
     for (int i = 0; i < (int) node->children.size(); i++) 
-        DrawNode(scene, node->children[i]);
+	 {
+        DrawNode(scene, node->children[i], transformation);
+	 }
     
     // Restore previous transformation
     glPopMatrix();
@@ -397,8 +462,10 @@ void DrawLights(R3Scene *scene)
 
 void DrawScene(R3Scene *scene) 
 {
-    // Draw nodes recursively
-    DrawNode(scene, scene->root);
+	 //Set the ship position to some value (to be replaced with actual val in DrawNode)
+	 ship_pos = R3Point(0,0,0);
+	 //Draw the node-- note we call it with the identity.
+    DrawNode(scene, scene->root, R3identity_matrix);
 }
 
 
@@ -443,6 +510,10 @@ void GLUTRedraw(void) {
     // move camera and the ship forward
     moveForward();
     updateShip();
+	 //Reset the intersection
+	 front_intersection = false;
+	 
+	 
     // left-right-up-down movement in viewplane
     if (deltaMoveX || deltaMoveZ)
         computePos(deltaMoveX, deltaMoveZ);
@@ -666,7 +737,9 @@ void peakDown() {
 //Awais
 // move forward with a constant speed
 void moveForward() {
-	y += cameraSpeed;
+	//Check if the ship is hitting anything; don't move camera forward if it is.
+	if (!front_intersection)
+		y += cameraSpeed;
 }
 
 void computeRotation(void) {
@@ -676,7 +749,11 @@ void computeRotation(void) {
 //Awais
 // movement for ship as camera moves
 void updateShip() {
-	ship->Translate(deltaMoveX,deltaMoveZ,-shipSpeed);
+	//Check if the ship is hitting anything. Don't move it if it is.
+	if (!front_intersection)
+		ship->Translate(deltaMoveX,deltaMoveZ,-shipSpeed);
+	else
+		ship->Translate(deltaMoveX,deltaMoveZ,0);
 }
 
 
