@@ -39,7 +39,7 @@ ambient(0,0,0,1)
 SFEnemy::SFEnemy(void)
 : fixed(1),
 projectileLength(1),
-projectileSpeed(1)
+projectileSpeed(.1)
 {
 }
 
@@ -49,12 +49,17 @@ projectileSpeed(1)
 SFEnemy::SFEnemy(int fix, R3Mesh& mesh)
 : fixed(fix),
 projectileLength(1),
-projectileSpeed(1),
+projectileSpeed(.1),
 projectileSource(mesh.Center())
 {
 }
 
 SFProjectile::SFProjectile(void)
+{
+}
+
+SFProjectile::SFProjectile(double spd)
+: speed(spd)
 {
 }
 
@@ -359,6 +364,72 @@ Read(const char *filename, R3Node *node)
             group_nodes[depth]->children.push_back(node);
             node->parent = group_nodes[depth];
         }
+        //in order to set the arwing node as a global in GlutTest.cpp
+        else if (!strcmp(cmd, "arwing")) {
+            // Read data
+            int m;
+            char meshname[256];
+            if (fscanf(fp, "%d%s", &m, meshname) != 2) {
+                fprintf(stderr, "Unable to parse mesh command %d in file %s\n", command_number, filename);
+                return 0;
+            }
+            
+            // Get material
+            R3Material *material = group_materials[depth];
+            if (m >= 0) {
+                if (m < (int) materials.size()) {
+                    material = materials[m];
+                }
+                else {
+                    fprintf(stderr, "Invalid material id at cone command %d in file %s\n", command_number, filename);
+                    return 0;
+                }
+            }
+            
+            // Get mesh filename
+            char buffer[2048];
+            strcpy(buffer, filename);
+            char *bufferp = strrchr(buffer, '/');
+            if (bufferp) *(bufferp+1) = '\0';
+            else buffer[0] = '\0';
+            strcat(buffer, meshname);
+            
+            // Create mesh
+            R3Mesh *mesh = new R3Mesh();
+            if (!mesh) {
+                fprintf(stderr, "Unable to allocate mesh\n");
+                return 0;
+            }
+            
+            // Read mesh file
+            if (!mesh->Read(buffer)) {
+                fprintf(stderr, "Unable to read mesh: %s\n", buffer);
+                return 0;
+            }
+            
+            // Create shape
+            R3Shape *shape = new R3Shape();
+            shape->type = R3_MESH_SHAPE;
+            shape->box = NULL;
+            shape->sphere = NULL;
+            shape->cylinder = NULL;
+            shape->cone = NULL;
+            shape->mesh = mesh;
+            shape->segment = NULL;
+            
+            // Create shape node
+            R3Node *node = new R3Node();
+            node->transformation = R3identity_matrix;
+            node->material = material;
+            node->shape = shape;
+            node->bbox = mesh->bbox;
+            
+            // Insert node
+            group_nodes[depth]->bbox.Union(node->bbox);
+            group_nodes[depth]->children.push_back(node);
+            node->parent = group_nodes[depth];
+            arwingNode = node;
+        }
         //turret - basically a box that shoots
         else if (!strcmp(cmd, "turret")) {
             // Read data
@@ -405,7 +476,9 @@ Read(const char *filename, R3Node *node)
             //list properties of the turret
             node->enemy->position = box->Centroid();
             node->enemy->projectileSource = box->Centroid();
-            node->enemy->projectileSource.SetZ(node->enemy->projectileSource.Z() - .5 * (box->ZMax() - box->ZMin()));
+            
+        //    node->enemy->projectileSource.InverseTransform(node->transformation);
+        //    node->enemy->projectileSource.SetZ(node->enemy->projectileSource.Z() - .5 * (box->ZMax() - box->ZMin()));
             
             enemies.push_back(node->enemy);
             

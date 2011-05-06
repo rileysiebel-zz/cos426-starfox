@@ -110,6 +110,7 @@ public:
     
 public:
     R3Node *root;
+    R3Node *arwingNode;
     vector<R3Light *> lights;
     vector<SFEnemy *> enemies;
     vector<SFProjectile *> projectiles;
@@ -237,6 +238,7 @@ struct SFProjectile {
     //constructor
 public:
     SFProjectile(void);
+    SFProjectile(double spd);
     
 public:
     R3Segment segment;

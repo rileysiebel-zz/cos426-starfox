@@ -65,6 +65,9 @@ float shipSpeed = 0.01;
 
 static double GetTime(void);
 
+//have the projectile sources been set (transformed properly
+static int sourcesSet = 0;
+
 
 void DrawShape(R3Shape *shape)
 {
@@ -504,6 +507,7 @@ void GLUTResize(int w, int h) {
 
 void GLUTRedraw(void) {
     
+    //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
     //double diff = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
  	//fprintf(stderr, "%f\n", diff-shipTipZ);
  	// Awais
@@ -637,9 +641,9 @@ void GLUTSpecial(int key, int xx, int yy) {
 		case GLUT_KEY_F2 :
 			rotationAngle = -0.01;
 			break;
-        case 27:             // ESCAPE key
+      /*  case 27:             // ESCAPE key
             exit (0);
-            break;
+            break;*/
 	}
 }
 
@@ -763,7 +767,7 @@ void updateEnemies(void)
 {
     for (int i = 0; i < scene->NEnemies(); i++)
     {
-        R3Vector z = *(new R3Vector(0,0,1));
+        R3Vector y = *(new R3Vector(0,1,0));
         SFEnemy *enemy = scene->Enemy(i);
         
         if (!enemy->fixed)
@@ -772,17 +776,30 @@ void updateEnemies(void)
         }
         
         //shoot (will change to a static rate in the future)
-        if ((int)GetTime() % 20 == 0)
+        if ((int)GetTime() % 2 == 0)
         {
             SFProjectile *proj = new SFProjectile();
-            R3Vector projDir = (ship->Center() + shipSpeed * z) - enemy->position;
+            R3Point arwingPos = ship->Center();
+            R3Point enemyPos = enemy->position;
+            
+            glPushMatrix();
+            LoadMatrix(&scene->arwingNode->transformation);
+            arwingPos.Transform(scene->arwingNode->transformation);
+            
+            
+            R3Vector projDir = (arwingPos/* + shipSpeed * z*/) - enemyPos;
             
             //temporary code for simplification. projectile length = 1
             projDir.Normalize();
             
+        //    projDir *= 4;
+            
             proj->segment = *(new R3Segment(enemy->projectileSource, projDir));
+            proj->speed = .01;
             
             scene->projectiles.push_back(proj);
+            
+            glPopMatrix();
         }
     }
 }
@@ -793,6 +810,17 @@ void updateProjectiles(void)
 {
     for (int i = 0; i < scene->NProjectiles(); i++)
     {
+        SFProjectile *proj = scene->Projectile(i);
+        
+        //calcluate for intersection with object on next move
+        
+        //move
+    //    printf("moving pt %f:%f:%f", proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
+        
+        proj->segment.Reset(proj->segment.Start() + proj->speed * proj->segment.Vector(), 
+                    proj->segment.End() + proj->speed * proj->segment.Vector());
+        
+    //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
         
     }
 }
