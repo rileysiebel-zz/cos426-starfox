@@ -21,8 +21,8 @@ void GLUTResize(int w, int h);
 GLuint loadTexture(Image* image);
 
 //ship movement and view functions
-void computeDir(float deltaAngle);
-void computePos(float deltaMoveX, float deltaMoveY);
+void computeDir(double deltaAngle);
+void computePos(double deltaMoveX, double deltaMoveY);
 void moveForward(void);
 void updateShip(void);
 void peakRight(void);

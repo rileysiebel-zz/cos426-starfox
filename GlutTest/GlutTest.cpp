@@ -18,7 +18,7 @@ static int GLUTwindow_width = 800;
 
 // START: Varaibles by Awais
 
-double epsilon = 10e-6;
+double epsilon = 10e-5;
 
 // this is Arwing
 R3Mesh *ship;
@@ -29,37 +29,44 @@ GLuint texBrick;
 GLuint texStone;
 
 // camera direction
-float lx,ly,lz;
+double lx,ly,lz;
 // XYZ position of the camera
-float x,y,z;
+double x,y,z;
 
 // the key states. These variables will be zero when no key is being presses
-float deltaMoveX = 0, deltaMoveZ = 0;
-float moveStep = 0.1; // left-right move speed
+double deltaMoveX = 0, deltaMoveZ = 0;
+double moveStep = 0.1; // left-right move speed
 
 // angles
 // angle of rotation for the camera direction
-float angleLR = 0.0f;
-float deltaAngleLR = 0.0f;
-float angleUD = 0.0f;
-float deltaAngleUD = 0.0f;
+double deltaAngleLR = 0.0;
+double deltaAngleUD = 0.0;
 
 bool rightAngle=false, leftAngle=false; 
 bool upAngle=false, downAngle=false;
 
+double angleStep = 0.01;
+double angleCutoffR = 0.2;
+double angleCutoffL = 0.2;
+double angleCutoffU = 0.2;
+double angleCutoffD = 0.1;
 
-float angleStep = 0.01;
-float angleCutOff = 0.2;
 
+// intersction
 bool front_intersection = false;
 R3Point ship_pos = R3Point(0,0,0);
 
 // rotation
-float rotationAngle = 0.0;
+double rotationAngle = 0.0;
+double rotationStep = 0.01;
 
 // speed varibales
-float cameraSpeed = 0.01;
-float shipSpeed = 0.01;
+double cameraSpeed = 0.1;
+double shipSpeed = 0.1;
+
+// mutilple views
+enum view {INSIDE, OUTSIDE};
+enum view currView = OUTSIDE;
 // END: Variables by Awais
 
 
@@ -507,10 +514,11 @@ void GLUTResize(int w, int h) {
 
 void GLUTRedraw(void) {
     
+    //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+ 	//fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
-    //double diff = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
- 	//fprintf(stderr, "%f\n", diff-shipTipZ);
- 	// Awais
+
+	// Awais
     // move camera and the ship forward
     moveForward();
     updateShip();
@@ -636,14 +644,21 @@ void GLUTSpecial(int key, int xx, int yy) {
 			downAngle = true;
 			break;
 		case GLUT_KEY_F1 :
-			rotationAngle = 0.01;
+			rotationAngle = rotationStep;
 			break;
 		case GLUT_KEY_F2 :
-			rotationAngle = -0.01;
+			rotationAngle = -rotationStep;
 			break;
-      /*  case 27:             // ESCAPE key
-            exit (0);
-            break;*/
+		case GLUT_KEY_F3 :
+			if (currView == INSIDE) {
+				ship->Translate(0.0,1.0,-6.0);	
+				currView = OUTSIDE;
+			}
+			else {
+				ship->Translate(0.0,-1.0,6.0);	
+				currView = INSIDE;
+			}
+			break;
 	}
 }
 
@@ -653,19 +668,19 @@ void releaseKey(int key, int x, int y) {
     
 	switch (key) {
 		case GLUT_KEY_LEFT :
-			deltaMoveX = 0.0f; 
+			deltaMoveX = 0.0; 
 			leftAngle = false;
 			break;
 		case GLUT_KEY_RIGHT : 
-			deltaMoveX = 0.0f;
+			deltaMoveX = 0.0;
 			rightAngle = false;
 			break;
 		case GLUT_KEY_UP :
-			deltaMoveZ = 0;
+			deltaMoveZ = 0.0;
 			upAngle = false;
 			break;
 		case GLUT_KEY_DOWN : 
-			deltaMoveZ = 0; 
+			deltaMoveZ = 0.0; 
 			downAngle = false;
 			break;
 		case GLUT_KEY_F1 :
@@ -678,18 +693,18 @@ void releaseKey(int key, int x, int y) {
 }
 
 // Awais
-void computePos(float dx, float dz) {
+void computePos(double dx, double dz) {
 	x += deltaMoveX;
 	z += deltaMoveZ;	
 }
 // Below: fncitons for angle movement
 void lookStraightLR() {
     double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    if ((diff - shipTipX) > 0) {
+    if ((diff - shipTipX) > epsilon) {
         deltaAngleLR = -angleStep;
         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
     }       
-    else if ((diff - shipTipX) < 0) {
+    else if ((diff - shipTipX) < -epsilon) {
         deltaAngleLR = angleStep;
         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
     }
@@ -697,11 +712,11 @@ void lookStraightLR() {
 
 void lookStraightUD() {
     double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    if ((diff - shipTipY) < 0) {
+    if ((diff - shipTipY) < -epsilon) {
         deltaAngleUD = -angleStep;
         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
     }       
-    else if ((diff - shipTipY) > 0) {
+    else if ((diff - shipTipY) > epsilon) {
         deltaAngleUD = angleStep;
         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
     }
@@ -709,7 +724,7 @@ void lookStraightUD() {
 
 void peakRight() {
     double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    if ((diff - shipTipX) > -.2) {
+    if ((diff - shipTipX) > -angleCutoffR) {
         deltaAngleLR = -angleStep;
         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
     }
@@ -717,7 +732,7 @@ void peakRight() {
 
 void peakLeft() {
     double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    if ((diff - shipTipX) < .2) {
+    if ((diff - shipTipX) < angleCutoffL) {
         deltaAngleLR = angleStep;
         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
     }
@@ -725,14 +740,14 @@ void peakLeft() {
 
 void peakUp() {
     double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    if ((diff - shipTipY) > -.2) {
+    if ((diff - shipTipY) > -angleCutoffU) {
         deltaAngleUD = angleStep;
         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
     }
 }
 void peakDown() {
     double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    if ((diff - shipTipY) < .1) {
+    if ((diff - shipTipY) < angleCutoffD) {
         deltaAngleUD = -angleStep;
         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
     }
@@ -903,10 +918,6 @@ ReadScene(const char *filename) {
     shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
     shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
     shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
-    //fprintf(stderr, "%f\n%f\n%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
-    //fprintf(stderr, "%f\n%f\n%f\n", ship->Face(200)->vertices.at(0)->position.X(),ship->Face(200)->vertices.at(0)->position.Y(),ship->Face(200)->vertices.at(0)->position.Z());
-    //fprintf(stderr, "%f\n%f\n%f\n", ship->Face(200)->vertices.at(1)->position.X(),ship->Face(200)->vertices.at(1)->position.Y(),ship->Face(200)->vertices.at(1)->position.Z());
-    //fprintf(stderr, "%f\n%f\n%f\n", ship->Face(200)->vertices.at(2)->position.X(),ship->Face(200)->vertices.at(2)->position.Y(),ship->Face(200)->vertices.at(2)->position.Z());
     
     // Return scene
     return scene;
