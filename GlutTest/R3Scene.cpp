@@ -476,6 +476,7 @@ Read(const char *filename, R3Node *node)
             //list properties of the turret
             node->enemy->position = box->Centroid();
             node->enemy->projectileSource = box->Centroid();
+            node->enemy->node = node;
             
         //    node->enemy->projectileSource.InverseTransform(node->transformation);
         //    node->enemy->projectileSource.SetZ(node->enemy->projectileSource.Z() - .5 * (box->ZMax() - box->ZMin()));
