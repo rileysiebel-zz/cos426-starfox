@@ -793,28 +793,56 @@ void updateEnemies(void)
         //shoot (will change to a static rate in the future)
         if ((int)GetTime() % 2 == 0)
         {
-            SFProjectile *proj = new SFProjectile();
+            SFProjectile *proj = new SFProjectile(.01);
             R3Point arwingPos = ship->Center();
-            R3Point enemyPos = enemy->position;
-            
-            glPushMatrix();
-            LoadMatrix(&scene->arwingNode->transformation);
-            arwingPos.Transform(scene->arwingNode->transformation);
+            R3Point enemyPos = enemy->position;//enemy->projectileSource;
             
             
-            R3Vector projDir = (arwingPos/* + shipSpeed * z*/) - enemyPos;
+            printf("arwing pos %f:%f:%f\n", arwingPos.X(), arwingPos.Y(), arwingPos.Z());
+            
+            printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
+            
+       //     glPushMatrix();
+        //    LoadMatrix(&scene->arwingNode->transformation);
+         //   arwingPos.InverseTransform(enemy->node->transformation);
+         //   arwingPos.Transform(scene->arwingNode->transformation);
+            R3Vector projDir = arwingPos - enemyPos;
+         //   R3Vector projDir = (arwingPos + shipSpeed * z) - enemyPos;
+            
+            printf("difference vect %f:%f:%f\n", projDir.X(), projDir.Y(), projDir.Z());
             
             //temporary code for simplification. projectile length = 1
             projDir.Normalize();
             
         //    projDir *= 4;
             
-            proj->segment = *(new R3Segment(enemy->projectileSource, projDir));
-            proj->speed = .01;
+            proj->segment = *(new R3Segment(enemyPos, projDir));
             
             scene->projectiles.push_back(proj);
             
-            glPopMatrix();
+            
+            // Create scene graph node
+            R3Shape *shape = new R3Shape();
+            shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
+            shape->box = NULL;
+            shape->sphere = NULL;
+            shape->cylinder = NULL;
+            shape->cone = NULL;
+            shape->mesh = NULL;
+            shape->segment = &proj->segment;
+            
+            R3Node *projNode = new R3Node();
+            projNode->material = enemy->node->material;
+            projNode->shape = shape;
+            projNode->bbox = proj->segment.BBox();
+            
+            //Note: specifically choosing NOT to merge bboxes with the generating enemy
+            enemy->node->children.push_back(projNode);
+            projNode->parent = enemy->node;
+            
+            
+            
+     //       glPopMatrix();
         }
     }
 }
@@ -830,7 +858,7 @@ void updateProjectiles(void)
         //calcluate for intersection with object on next move
         
         //move
-    //    printf("moving pt %f:%f:%f", proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
+    //    printf("projectile endpoint %f:%f:%f\n", proj->segment.End().X(), proj->segment.End().Y(), proj->segment.End().Z());
         
         proj->segment.Reset(proj->segment.Start() + proj->speed * proj->segment.Vector(), 
                     proj->segment.End() + proj->speed * proj->segment.Vector());

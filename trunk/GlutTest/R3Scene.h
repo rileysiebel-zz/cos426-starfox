@@ -232,6 +232,8 @@ public:
     double projectileLength;
     double projectileSpeed;
     R3Point projectileSource;        //source of projectiles
+    
+    R3Node *node;
 };
 
 struct SFProjectile {
