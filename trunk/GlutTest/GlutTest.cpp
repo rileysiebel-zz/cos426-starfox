@@ -20,6 +20,7 @@
 
    double epsilon = 10e-5;
    double collision_epsilon = .1;
+	double cull_depth = 50;
 
 // this is Arwing
    R3Mesh *ship;
@@ -506,8 +507,8 @@
       // Draw shape
       if (node->shape) 
       {
-      	   	if (!(box_center.Y() + edge_length < y)
-   	&&  !(box_center.Y() - edge_length > y + 50))
+      if (!(box_center.Y() + edge_length < y)
+   	&&  !(box_center.Y() - edge_length > y + cull_depth))
    	{
          DrawShape(node->shape); 
          }
@@ -602,7 +603,6 @@
    {
     //Set the ship position to some value (to be replaced with actual val in DrawNode)
       ship_pos = R3Point(0,0,0);
-      cout << "2oo!" << endl;
     //Draw the node-- note we call it with the identity.
       DrawNode(scene, scene->root, R3identity_matrix);
    }
