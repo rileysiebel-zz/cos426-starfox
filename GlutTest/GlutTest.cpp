@@ -448,6 +448,28 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
 		}
 		p.SetX(p.X() + ship->Radius());
 		
+		p.SetX(p.X() - ship->Radius()/2);
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+		{
+			compute_intersections(p, c, xmid, ymid, zmid);
+			//cout << front_intersection << endl;
+		}
+		p.SetX(p.X() + ship->Radius());
+		
+		p.SetX(p.X() + ship->Radius()/2);
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+		{
+			compute_intersections(p, c, xmid, ymid, zmid);
+			//cout << front_intersection << endl;
+		}
+		p.SetX(p.X() - ship->Radius()/2);
+		
 		p.SetZ(p.Z() - ship->Radius()/5);
 		//Check if we have an intersection and set the right booleans
 	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
