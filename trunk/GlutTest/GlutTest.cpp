@@ -414,7 +414,7 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
       &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
 		{
 			compute_intersections(p, c, xmid, ymid, zmid);
-			cout << front_intersection << endl;
+			//cout << front_intersection << endl;
 		}
 		
 	 }
