@@ -1,7 +1,6 @@
 // Source file for the R3 scene graph class 
 
 
-
 // Include files 
 
 #include "R3Scene.h"
@@ -548,9 +547,13 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = mesh->bbox;
-            node->enemy = new SFEnemy();
+            node->enemy = new SFEnemy(!FIXED, *mesh);
             
-            // node->enemy->position = shape
+            node->enemy->position = shape->mesh->Center();
+            node->enemy->projectileSource = shape->mesh->Center();
+            node->enemy->node = node;
+            
+            enemies.push_back(node->enemy);
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
