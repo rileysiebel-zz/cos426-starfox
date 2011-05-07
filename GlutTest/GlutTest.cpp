@@ -2,158 +2,159 @@
 #include "R3/R3.h"
 #include "R3Scene.h"
 
-using namespace std;
+   using namespace std;
 
 // Arguments
-static char *input_scene_name = "../art/level1.scn";
+   static char *input_scene_name = "../art/level1.scn";
 
 // Display Variables
 // use these, throw the stuff below away
-static R3Scene *scene = NULL;
-static R3Camera camera;
+   static R3Scene *scene = NULL;
+   static R3Camera camera;
 
 // GLUT variables
-static int GLUTwindow_height = 800;
-static int GLUTwindow_width = 800;
+   static int GLUTwindow_height = 800;
+   static int GLUTwindow_width = 800;
 
 // START: Varaibles by Awais
 
-double epsilon = 10e-5;
-double collision_epsilon = .1;
+   double epsilon = 10e-5;
+   double collision_epsilon = .1;
 
 // this is Arwing
-R3Mesh *ship;
-double shipTipX,shipTipY,shipTipZ;
+   R3Mesh *ship;
+   double shipTipX,shipTipY,shipTipZ;
 
 // texture variables
-GLuint texBrick;
-GLuint texStone;
+   GLuint texBrick;
+   GLuint texStone;
 
 // camera direction
-double lx,ly,lz;
+   double lx,ly,lz;
 // XYZ position of the camera
-double x,y,z;
+   double x,y,z;
 
 // the key states. These variables will be zero when no key is being presses
-double deltaMoveX = 0, deltaMoveZ = 0;
-double moveStep = 0.1; // left-right move speed
+   double deltaMoveX = 0, deltaMoveZ = 0;
+   double moveStep = 0.1; // left-right move speed
 
 // angles
 // angle of rotation for the camera direction
-double deltaAngleLR = 0.0;
-double deltaAngleUD = 0.0;
+   double deltaAngleLR = 0.0;
+   double deltaAngleUD = 0.0;
 
-bool rightAngle=false, leftAngle=false; 
-bool upAngle=false, downAngle=false;
+   bool rightAngle=false, leftAngle=false; 
+   bool upAngle=false, downAngle=false;
 
-double angleStep = 0.01;
-double angleCutoffR = 0.2;
-double angleCutoffL = 0.2;
-double angleCutoffU = 0.2;
-double angleCutoffD = 0.1;
+   double angleStep = 0.01;
+   double angleCutoffR = 0.2;
+   double angleCutoffL = 0.2;
+   double angleCutoffU = 0.2;
+   double angleCutoffD = 0.1;
 
 
 // intersction
-bool front_intersection = false;
-bool back_intersection = false;
-bool left_intersection = false;
-bool right_intersection = false;
-bool top_intersection = false;
-bool bottom_intersection = false;
+   bool front_intersection = false;
+   bool back_intersection = false;
+   bool left_intersection = false;
+   bool right_intersection = false;
+   bool top_intersection = false;
+   bool bottom_intersection = false;
 
 
-R3Point ship_pos = R3Point(0,0,0);
+   R3Point ship_pos = R3Point(0,0,0);
 
 // rotation
-double rotationAngle = 0.0;
-double rotationStep = 0.01;
+   double rotationAngle = 0.0;
+   double rotationStep = 0.01;
 
 // speed varibales
-double cameraSpeed = 0.05;
-double shipSpeed = 0.05;
+   double cameraSpeed = 0.05;
+   double shipSpeed = 0.05;
 
 // mutilple views
-enum view {INSIDE, OUTSIDE};
-enum view currView = OUTSIDE;
+   enum view {INSIDE, OUTSIDE};
+   enum view currView = OUTSIDE;
 // END: Variables by Awais
 
 
-static double GetTime(void);
-void setCumulativeTransformations(R3Scene *scene, R3Node *node, R3Matrix transformation);
+   static double GetTime(void);
+   void setCumulativeTransformations(R3Scene *scene, R3Node *node, R3Matrix transformation);
 
 
-void DrawShape(R3Shape *shape)
-{
+   void DrawShape(R3Shape *shape)
+   {
     // Check shape type
-    if (shape->type == R3_BOX_SHAPE) shape->box->Draw();
-    else if (shape->type == R3_SPHERE_SHAPE) shape->sphere->Draw();
-    else if (shape->type == R3_CYLINDER_SHAPE) shape->cylinder->Draw();
-    else if (shape->type == R3_CONE_SHAPE) shape->cone->Draw();
-    else if (shape->type == R3_MESH_SHAPE) shape->mesh->Draw();
-    else if (shape->type == R3_SEGMENT_SHAPE) shape->segment->Draw();
-    else fprintf(stderr, "Unrecognized shape type: %d\n", shape->type);
-}
+      if (shape->type == R3_BOX_SHAPE) shape->box->Draw();
+      else if (shape->type == R3_SPHERE_SHAPE) shape->sphere->Draw();
+      else if (shape->type == R3_CYLINDER_SHAPE) shape->cylinder->Draw();
+      else if (shape->type == R3_CONE_SHAPE) shape->cone->Draw();
+      else if (shape->type == R3_MESH_SHAPE) shape->mesh->Draw();
+      else if (shape->type == R3_SEGMENT_SHAPE) shape->segment->Draw();
+      else fprintf(stderr, "Unrecognized shape type: %d\n", shape->type);
+   }
 
 
 
-void LoadMatrix(R3Matrix *matrix)
-{
+   void LoadMatrix(R3Matrix *matrix)
+   {
     // Multiply matrix by top of stack
     // Take transpose of matrix because OpenGL represents vectors with 
     // column-vectors and R3 represents them with row-vectors
-    R3Matrix m = matrix->Transpose();
-    glMultMatrixd((double *) &m);
-}
+      R3Matrix m = matrix->Transpose();
+      glMultMatrixd((double *) &m);
+   }
 
 
 
-void LoadMaterial(R3Material *material) 
-{
-    GLfloat c[4];
+   void LoadMaterial(R3Material *material) 
+   {
+      GLfloat c[4];
     
     // Check if same as current
-    static R3Material *current_material = NULL;
-    if (material == current_material) return;
-    current_material = material;
+      static R3Material *current_material = NULL;
+      if (material == current_material) 
+         return;
+      current_material = material;
     
     // Compute "opacity"
-    double opacity = 1 - material->kt.Luminance();
+      double opacity = 1 - material->kt.Luminance();
     
     // Load ambient
-    c[0] = material->ka[0];
-    c[1] = material->ka[1];
-    c[2] = material->ka[2];
-    c[3] = opacity;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, c);
+      c[0] = material->ka[0];
+      c[1] = material->ka[1];
+      c[2] = material->ka[2];
+      c[3] = opacity;
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, c);
     
     // Load diffuse
-    c[0] = material->kd[0];
-    c[1] = material->kd[1];
-    c[2] = material->kd[2];
-    c[3] = opacity;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, c);
+      c[0] = material->kd[0];
+      c[1] = material->kd[1];
+      c[2] = material->kd[2];
+      c[3] = opacity;
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, c);
     
     // Load specular
-    c[0] = material->ks[0];
-    c[1] = material->ks[1];
-    c[2] = material->ks[2];
-    c[3] = opacity;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, c);
+      c[0] = material->ks[0];
+      c[1] = material->ks[1];
+      c[2] = material->ks[2];
+      c[3] = opacity;
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, c);
     
     // Load emission
-    c[0] = material->emission.Red();
-    c[1] = material->emission.Green();
-    c[2] = material->emission.Blue();
-    c[3] = opacity;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, c);
+      c[0] = material->emission.Red();
+      c[1] = material->emission.Green();
+      c[2] = material->emission.Blue();
+      c[3] = opacity;
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, c);
     
     // Load shininess
-    c[0] = material->shininess;
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, c[0]);
+      c[0] = material->shininess;
+      glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, c[0]);
     
     // Load texture
-    if (material->texture) {
-        if (material->texture_index <= 0) {
+      if (material->texture) {
+         if (material->texture_index <= 0) {
             // Create texture in OpenGL
             GLuint texture_index;
             glGenTextures(1, &texture_index);
@@ -166,11 +167,11 @@ void LoadMaterial(R3Material *material)
             R2Pixel *pixelsp = pixels;
             GLfloat *bufferp = buffer;
             for (int j = 0; j < npixels; j++) { 
-                *(bufferp++) = pixelsp->Red();
-                *(bufferp++) = pixelsp->Green();
-                *(bufferp++) = pixelsp->Blue();
-                *(bufferp++) = pixelsp->Alpha();
-                pixelsp++;
+               *(bufferp++) = pixelsp->Red();
+               *(bufferp++) = pixelsp->Green();
+               *(bufferp++) = pixelsp->Blue();
+               *(bufferp++) = pixelsp->Alpha();
+               pixelsp++;
             }
             glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -179,120 +180,105 @@ void LoadMaterial(R3Material *material)
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
             glTexImage2D(GL_TEXTURE_2D, 0, 4, image->Width(), image->Height(), 0, GL_RGBA, GL_FLOAT, buffer);
             delete [] buffer;
-        }
+         }
         
         // Select texture
-        glBindTexture(GL_TEXTURE_2D, material->texture_index); 
-        glEnable(GL_TEXTURE_2D);
-    }
-    else {
-        glDisable(GL_TEXTURE_2D);
-    }
+         glBindTexture(GL_TEXTURE_2D, material->texture_index); 
+         glEnable(GL_TEXTURE_2D);
+      }
+      else {
+         glDisable(GL_TEXTURE_2D);
+      }
     
     // Enable blending for transparent surfaces
-    if (opacity < 1) {
-        glDepthMask(false);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_BLEND);
-    }
-    else {
-        glDisable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ZERO);
-        glDepthMask(true);
-    }
-}
+      if (opacity < 1) {
+         glDepthMask(false);
+         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+         glEnable(GL_BLEND);
+      }
+      else {
+         glDisable(GL_BLEND);
+         glBlendFunc(GL_ONE, GL_ZERO);
+         glDepthMask(true);
+      }
+   }
 
 
-void LoadCamera(R3Camera *camera)
-{
+   void LoadCamera(R3Camera *camera)
+   {
     // Set projection transformation
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(2*180.0*camera->yfov/M_PI, (GLdouble) GLUTwindow_width /(GLdouble) GLUTwindow_height, 0.01, 10000);
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      gluPerspective(2*180.0*camera->yfov/M_PI, (GLdouble) GLUTwindow_width /(GLdouble) GLUTwindow_height, 0.01, 10000);
     
     // Set camera transformation
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(x, y, z,
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      gluLookAt(x, y, z,
               x+lx, y+ly,  z+lz,
               0, 1,  0); 
-}
+   }
 
-void LoadLights(R3Scene *scene)
-{
-    GLfloat buffer[4];
+   void LoadLights(R3Scene *scene)
+   {
+      GLfloat buffer[4];
     
     // Load ambient light
-    static GLfloat ambient[4];
-    ambient[0] = scene->ambient[0];
-    ambient[1] = scene->ambient[1];
-    ambient[2] = scene->ambient[2];
-    ambient[3] = 1;
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+      static GLfloat ambient[4];
+      ambient[0] = scene->ambient[0];
+      ambient[1] = scene->ambient[1];
+      ambient[2] = scene->ambient[2];
+      ambient[3] = 1;
+      glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
     
     // Load scene lights
-    for (int i = 0; i < (int) scene->lights.size(); i++) {
-        R3Light *light = scene->lights[i];
-        int index = GL_LIGHT0 + i;
+      for (int i = 0; i < (int) scene->lights.size(); i++) {
+         R3Light *light = scene->lights[i];
+         int index = GL_LIGHT0 + i;
         
         // Temporarily disable light
-        glDisable(index);
+         glDisable(index);
         
         // Load color
-        buffer[0] = light->color[0];
-        buffer[1] = light->color[1];
-        buffer[2] = light->color[2];
-        buffer[3] = 1.0;
-        glLightfv(index, GL_DIFFUSE, buffer);
-        glLightfv(index, GL_SPECULAR, buffer);
+         buffer[0] = light->color[0];
+         buffer[1] = light->color[1];
+         buffer[2] = light->color[2];
+         buffer[3] = 1.0;
+         glLightfv(index, GL_DIFFUSE, buffer);
+         glLightfv(index, GL_SPECULAR, buffer);
         
         // Load attenuation with distance
-        buffer[0] = light->constant_attenuation;
-        buffer[1] = light->linear_attenuation;
-        buffer[2] = light->quadratic_attenuation;
-        glLightf(index, GL_CONSTANT_ATTENUATION, buffer[0]);
-        glLightf(index, GL_LINEAR_ATTENUATION, buffer[1]);
-        glLightf(index, GL_QUADRATIC_ATTENUATION, buffer[2]);
+         buffer[0] = light->constant_attenuation;
+         buffer[1] = light->linear_attenuation;
+         buffer[2] = light->quadratic_attenuation;
+         glLightf(index, GL_CONSTANT_ATTENUATION, buffer[0]);
+         glLightf(index, GL_LINEAR_ATTENUATION, buffer[1]);
+         glLightf(index, GL_QUADRATIC_ATTENUATION, buffer[2]);
         
         // Load spot light behavior
-        buffer[0] = 180.0 * light->angle_cutoff / M_PI;
-        buffer[1] = light->angle_attenuation;
-        glLightf(index, GL_SPOT_CUTOFF, buffer[0]);
-        glLightf(index, GL_SPOT_EXPONENT, buffer[1]);
+         buffer[0] = 180.0 * light->angle_cutoff / M_PI;
+         buffer[1] = light->angle_attenuation;
+         glLightf(index, GL_SPOT_CUTOFF, buffer[0]);
+         glLightf(index, GL_SPOT_EXPONENT, buffer[1]);
         
         // Load positions/directions
-        if (light->type == R3_DIRECTIONAL_LIGHT) {
+         if (light->type == R3_DIRECTIONAL_LIGHT) {
             // Load direction
             buffer[0] = -(light->direction.X());
             buffer[1] = -(light->direction.Y());
             buffer[2] = -(light->direction.Z());
             buffer[3] = 0.0;
             glLightfv(index, GL_POSITION, buffer);
-        }
-        else if (light->type == R3_POINT_LIGHT) {
+         }
+         else if (light->type == R3_POINT_LIGHT) {
             // Load position
             buffer[0] = light->position.X();
             buffer[1] = light->position.Y();
             buffer[2] = light->position.Z();
             buffer[3] = 1.0;
             glLightfv(index, GL_POSITION, buffer);
-        }
-        else if (light->type == R3_SPOT_LIGHT) {
-            // Load position
-            buffer[0] = light->position.X();
-            buffer[1] = light->position.Y();
-            buffer[2] = light->position.Z();
-            buffer[3] = 1.0;
-            glLightfv(index, GL_POSITION, buffer);
-            
-            // Load direction
-            buffer[0] = light->direction.X();
-            buffer[1] = light->direction.Y();
-            buffer[2] = light->direction.Z();
-            buffer[3] = 1.0;
-            glLightfv(index, GL_SPOT_DIRECTION, buffer);
-        }
-        else if (light->type == R3_AREA_LIGHT) {
+         }
+         else if (light->type == R3_SPOT_LIGHT) {
             // Load position
             buffer[0] = light->position.X();
             buffer[1] = light->position.Y();
@@ -306,225 +292,252 @@ void LoadLights(R3Scene *scene)
             buffer[2] = light->direction.Z();
             buffer[3] = 1.0;
             glLightfv(index, GL_SPOT_DIRECTION, buffer);
-        }
-        else {
+         }
+         else if (light->type == R3_AREA_LIGHT) {
+            // Load position
+            buffer[0] = light->position.X();
+            buffer[1] = light->position.Y();
+            buffer[2] = light->position.Z();
+            buffer[3] = 1.0;
+            glLightfv(index, GL_POSITION, buffer);
+            
+            // Load direction
+            buffer[0] = light->direction.X();
+            buffer[1] = light->direction.Y();
+            buffer[2] = light->direction.Z();
+            buffer[3] = 1.0;
+            glLightfv(index, GL_SPOT_DIRECTION, buffer);
+         }
+         else {
             fprintf(stderr, "Unrecognized light type: %d\n", light->type);
             return;
-        }
+         }
         
         // Enable light
-        glEnable(index);
-    }
-}
+         glEnable(index);
+      }
+   }
 
 
-void compute_intersections(R3Point p, R3Point c, double xmid, 
-									double ymid, double zmid)
-{
-	double front_diff = 0;
-	double top_diff = 0;
-	double bottom_diff = 0;
-	double left_diff = 0;
-	double right_diff = 0;
-	double back_diff = 0;
-	
-	front_diff = abs(p.Y() - c.Y() + ymid +  0);
-	back_diff = abs(p.Y() - c.Y() - ymid -  0);
-	left_diff = abs(p.X() - c.X() + xmid +  0);
-	right_diff = abs(p.X() - c.X() - xmid -  0);
-	top_diff = abs(p.Z() - c.Z() - zmid -  0 );
-	bottom_diff = abs(p.Z() - c.Z() + zmid +  0 );
-	
-	if (front_diff <= collision_epsilon)
-		front_intersection = true;
-	if (back_diff <= collision_epsilon)
-		back_intersection = true;
-	if (left_diff <= collision_epsilon)
-		left_intersection = true;
-	if (right_diff <= collision_epsilon)
-		right_intersection = true;
-	if (top_diff <= collision_epsilon)
-		top_intersection = true;
-	if (bottom_diff <= collision_epsilon)
-		bottom_intersection = true;	
-}
+   void compute_intersections(R3Point p, R3Point c, double xmid, 
+   								double ymid, double zmid)
+   {
+      double front_diff = 0;
+      double top_diff = 0;
+      double bottom_diff = 0;
+      double left_diff = 0;
+      double right_diff = 0;
+      double back_diff = 0;
+   
+      front_diff = abs(p.Y() - c.Y() + ymid +  0);
+      back_diff = abs(p.Y() - c.Y() - ymid -  0);
+      left_diff = abs(p.X() - c.X() + xmid +  0);
+      right_diff = abs(p.X() - c.X() - xmid -  0);
+      top_diff = abs(p.Z() - c.Z() - zmid -  0 );
+      bottom_diff = abs(p.Z() - c.Z() + zmid +  0 );
+   
+      if (front_diff <= collision_epsilon)
+         front_intersection = true;
+      if (back_diff <= collision_epsilon)
+         back_intersection = true;
+      if (left_diff <= collision_epsilon)
+         left_intersection = true;
+      if (right_diff <= collision_epsilon)
+         right_intersection = true;
+      if (top_diff <= collision_epsilon)
+         top_intersection = true;
+      if (bottom_diff <= collision_epsilon)
+         bottom_intersection = true;	
+   }
 
 
 //Updated this to find when the ship is inside object bboxes
 //Also made method adjust node coordinates for transformations
-void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
-{
+   void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
+   {
     // Push transformation onto stack
-    glPushMatrix();
-    LoadMatrix(&node->transformation);
-	 //Update the transformation
-  	 transformation *= node->transformation;	
-	   
-	 //This shows how you would get the *proper* coordinates. 
-	 //YOU MUST APPLY THE TRANSFORMATION TO THE POINT FIRST.	
-	 //cout << (transformation * node->bbox.Centroid()).X() << endl;
-	
-	//Extract the ship's location (from inside a node)
-	 if (node->shape != NULL &&
-	 	  node->shape->mesh == ship)
-	 {
-		R3Point t = transformation * node->shape->mesh->Center();
-	 	ship_pos = t;
-	 }
-	 
-	 //Check to see if the ship is inside anything
-	 if (node->shape != NULL
-	 &&  node->shape->mesh != ship
-	 && ship_pos != R3Point(0,0,0))
-	 {
-	 	R3Point p = ship_pos;
-		R3Point c = R3Point(0,0,0);
-		//These are the bbox edge lengths divided by 2
-		double xmid = 0;
-		double ymid = 0;
-		double zmid = 0;
-		
-		//BBoxes are not explicit-- we have to compute them.
-		if (node->shape->mesh != NULL)
-		{
-		  c = transformation * node->shape->mesh->Center();
-		  xmid = node->shape->mesh->Radius();
-		  ymid = node->shape->mesh->Radius();
-		  zmid = node->shape->mesh->Radius();
-		}
-		else if (node->shape->box != NULL)
-		{
-		  c = transformation * node->shape->box->Centroid();
-		  xmid = (node->shape->box->XMax() - node->shape->box->XMin())/2;
-		  ymid = (node->shape->box->YMax() - node->shape->box->YMin())/2;
-		  zmid = (node->shape->box->ZMax() - node->shape->box->ZMin())/2;
-		}
-		else if (node->shape->cylinder != NULL)
-		{
-		  c = transformation * node->shape->cylinder->Center();
-		  xmid = node->shape->cylinder->Radius();
-		  ymid = node->shape->cylinder->Radius();
-		  zmid = node->shape->cylinder->Height()/2;
-		}
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		
-		p.SetY(p.Y() + ship->Radius());
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		p.SetY(p.Y() - ship->Radius());
-		
-		p.SetX(p.X() + ship->Radius());
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		p.SetX(p.X() - ship->Radius());
-		
-		p.SetX(p.X() - ship->Radius());
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		p.SetX(p.X() + ship->Radius());
-		
-		p.SetX(p.X() - ship->Radius()/2);
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		p.SetX(p.X() + ship->Radius());
-		
-		p.SetX(p.X() + ship->Radius()/2);
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		p.SetX(p.X() - ship->Radius()/2);
-		
-		p.SetZ(p.Z() - ship->Radius()/5);
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		p.SetZ(p.Z() + ship->Radius()/5);
-		
-		p.SetZ(p.Z() + ship->Radius()/5);
-		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
-      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
-      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
-		{
-			compute_intersections(p, c, xmid, ymid, zmid);
-			//cout << front_intersection << endl;
-		}
-		p.SetZ(p.Z() - ship->Radius()/5);
-	 }
-	 
-    // Load material
-    if (node->material) LoadMaterial(node->material);
-    
-    // Draw shape
-    if (node->shape) DrawShape(node->shape); 
-	 
-    // Draw children nodes
-    for (int i = 0; i < (int) node->children.size(); i++) 
-	 {
-        DrawNode(scene, node->children[i], transformation);
-	 }
-    
+      glPushMatrix();
+      LoadMatrix(&node->transformation);
+    //Update the transformation
+      transformation *= node->transformation;	
+      
+    //This shows how you would get the *proper* coordinates. 
+    //YOU MUST APPLY THE TRANSFORMATION TO THE POINT FIRST.	
+    //cout << (transformation * node->bbox.Centroid()).X() << endl;
+   
+   //Extract the ship's location (from inside a node)
+      if (node->shape != NULL &&
+        node->shape->mesh == ship)
+      {
+         R3Point t = transformation * node->shape->mesh->Center();
+         ship_pos = t;
+         DrawShape(node->shape);
+      }
+      R3Point box_center = transformation * node->bbox.Centroid();
+      double edge_length = (node->bbox.YMax() - node->bbox.YMin())/2;
+      //cout << box_center.Y() << " " << y << endl;
+   	
+      //cout << ship_pos.Y() << endl;
+   	
+      //Check to see if the ship is inside anything
+      if (node->shape != NULL
+         &&  node->shape->mesh != ship
+         && ship_pos != R3Point(0,0,0))
+      {   
+         R3Point p = ship_pos;
+         R3Point c = R3Point(0,0,0);
+         double xmid = 0;
+         double ymid = 0;
+         double zmid = 0;
+            //These are the bbox edge lengths divided by 2
+            
+            //BBoxes are not explicit-- we have to compute them.
+         if (node->shape->mesh != NULL)
+         {
+            c = transformation * node->shape->mesh->Center();
+            xmid = node->shape->mesh->Radius();
+            ymid = node->shape->mesh->Radius();
+            zmid = node->shape->mesh->Radius();
+         }
+         else if (node->shape->box != NULL)
+         {
+            c = transformation * node->shape->box->Centroid();
+            xmid = (node->shape->box->XMax() - node->shape->box->XMin())/2;
+            ymid = (node->shape->box->YMax() - node->shape->box->YMin())/2;
+            zmid = (node->shape->box->ZMax() - node->shape->box->ZMin())/2;
+         }
+         else if (node->shape->cylinder != NULL)
+         {
+            c = transformation * node->shape->cylinder->Center();
+            xmid = node->shape->cylinder->Radius();
+            ymid = node->shape->cylinder->Radius();
+            zmid = node->shape->cylinder->Height()/2;
+         }
+            //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+            
+         p.SetY(p.Y() + ship->Radius());
+         //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+         p.SetY(p.Y() - ship->Radius());
+         
+         p.SetX(p.X() + ship->Radius());
+         //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+         p.SetX(p.X() - ship->Radius());
+         
+         p.SetX(p.X() - ship->Radius());
+         //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+         p.SetX(p.X() + ship->Radius());
+         
+         p.SetX(p.X() - ship->Radius()/2);
+         //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+         p.SetX(p.X() + ship->Radius());
+         
+         p.SetX(p.X() + ship->Radius()/2);
+         //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+         p.SetX(p.X() - ship->Radius()/2);
+         
+         p.SetZ(p.Z() - ship->Radius()/5);
+         //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+         p.SetZ(p.Z() + ship->Radius()/5);
+         
+         p.SetZ(p.Z() + ship->Radius()/5);
+         //Check if we have an intersection and set the right booleans
+         if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+            &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+            &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+         {
+            compute_intersections(p, c, xmid, ymid, zmid);
+            //cout << front_intersection << endl;
+         }
+         p.SetZ(p.Z() - ship->Radius()/5);
+      }
+      
+      // Load material
+      if (node->material) LoadMaterial(node->material);
+      
+      // Draw shape
+      if (node->shape) 
+      {
+      	   	if (!(box_center.Y() + edge_length < y)
+   	&&  !(box_center.Y() - edge_length > y + 50))
+   	{
+         DrawShape(node->shape); 
+         }
+      }
+      // Draw children nodes
+      for (int i = 0; i < (int) node->children.size(); i++) 
+      {
+         DrawNode(scene, node->children[i], transformation);
+      }
+      
     // Restore previous transformation
-    glPopMatrix();
-}
+      glPopMatrix();
+   }
 
 
 
-void DrawLights(R3Scene *scene)
-{
+   void DrawLights(R3Scene *scene)
+   {
     // Check if should draw lights
     
     // Setup
-    GLboolean lighting = glIsEnabled(GL_LIGHTING);
-    glDisable(GL_LIGHTING);
+      GLboolean lighting = glIsEnabled(GL_LIGHTING);
+      glDisable(GL_LIGHTING);
     
     // Draw all lights
-    double radius = scene->bbox.DiagonalRadius();
-    for (int i = 0; i < scene->NLights(); i++) {
-        R3Light *light = scene->Light(i);
-        glColor3d(light->color[0], light->color[1], light->color[2]);
-        if (light->type == R3_DIRECTIONAL_LIGHT) {
+      double radius = scene->bbox.DiagonalRadius();
+      for (int i = 0; i < scene->NLights(); i++) {
+         R3Light *light = scene->Light(i);
+         glColor3d(light->color[0], light->color[1], light->color[2]);
+         if (light->type == R3_DIRECTIONAL_LIGHT) {
             // Draw direction vector
             glLineWidth(5);
             glBegin(GL_LINES);
@@ -534,12 +547,12 @@ void DrawLights(R3Scene *scene)
             glVertex3d(centroid[0] - 1.25*vector[0], centroid[1] - 1.25*vector[1], centroid[2] - 1.25*vector[2]);
             glEnd();
             glLineWidth(1);
-        }
-        else if (light->type == R3_POINT_LIGHT) {
+         }
+         else if (light->type == R3_POINT_LIGHT) {
             // Draw sphere at point light position
             R3Sphere(light->position, 0.1 * radius).Draw();
-        }
-        else if (light->type == R3_SPOT_LIGHT) {
+         }
+         else if (light->type == R3_SPOT_LIGHT) {
             // Draw sphere at point light position and line indicating direction
             R3Sphere(light->position, 0.1 * radius).Draw();
             
@@ -551,17 +564,17 @@ void DrawLights(R3Scene *scene)
             glVertex3d(light->position[0] + 0.25*vector[0], light->position[1] + 0.25*vector[1], light->position[2] + 0.25*vector[2]);
             glEnd();
             glLineWidth(1);
-        }
-        else if (light->type == R3_AREA_LIGHT) {
+         }
+         else if (light->type == R3_AREA_LIGHT) {
             // Draw circular area
             R3Vector v1, v2;
             double r = light->radius;
             R3Point p = light->position;
             int dim = light->direction.MinDimension();
             if (dim == 0) { v1 = light->direction % R3posx_vector; v1.Normalize(); 
-                v2 = light->direction % v1; }
+               v2 = light->direction % v1; }
             else if (dim == 1) { v1 = light->direction % R3posy_vector; v1.Normalize(); 
-                v2 = light->direction % v1; }
+               v2 = light->direction % v1; }
             else { v1 = light->direction % R3posz_vector; v1.Normalize(); v2 = light->direction % v1; }
             glBegin(GL_POLYGON);
             glVertex3d(p[0] +  1.00*r*v1[0] +  0.00*r*v2[0], p[1] +  1.00*r*v1[1] +  0.00*r*v2[1], p[2] +  1.00*r*v1[2] +  0.00*r*v2[2]);
@@ -573,120 +586,121 @@ void DrawLights(R3Scene *scene)
             glVertex3d(p[0] +  0.00*r*v1[0] + -1.00*r*v2[0], p[1] +  0.00*r*v1[1] + -1.00*r*v2[1], p[2] +  0.00*r*v1[2] + -1.00*r*v2[2]);
             glVertex3d(p[0] +  0.71*r*v1[0] + -0.71*r*v2[0], p[1] +  0.71*r*v1[1] + -0.71*r*v2[1], p[2] +  0.71*r*v1[2] + -0.71*r*v2[2]);
             glEnd();
-        }
-        else {
+         }
+         else {
             fprintf(stderr, "Unrecognized light type: %d\n", light->type);
             return;
-        }
-    }
+         }
+      }
     
     // Clean up
-    if (lighting) glEnable(GL_LIGHTING);
-}
+      if (lighting) glEnable(GL_LIGHTING);
+   }
 
 
-void DrawScene(R3Scene *scene) 
-{
-	 //Set the ship position to some value (to be replaced with actual val in DrawNode)
-	 ship_pos = R3Point(0,0,0);
-	 //Draw the node-- note we call it with the identity.
-    DrawNode(scene, scene->root, R3identity_matrix);
-}
+   void DrawScene(R3Scene *scene) 
+   {
+    //Set the ship position to some value (to be replaced with actual val in DrawNode)
+      ship_pos = R3Point(0,0,0);
+      cout << "2oo!" << endl;
+    //Draw the node-- note we call it with the identity.
+      DrawNode(scene, scene->root, R3identity_matrix);
+   }
 
 
-void DrawProjectiles(R3Scene *scene)
-{
-    for (int i = 0; i < scene->NProjectiles(); i++)
-    {
-        SFProjectile *proj = scene->Projectile(i);
-        proj->segment.Draw();
-    }
-}
+   void DrawProjectiles(R3Scene *scene)
+   {
+      for (int i = 0; i < scene->NProjectiles(); i++)
+      {
+         SFProjectile *proj = scene->Projectile(i);
+         proj->segment.Draw();
+      }
+   }
 
-void GLUTResize(int w, int h) {
+   void GLUTResize(int w, int h) {
     
     // Prevent a divide by zero, when window is too short
     // (you cant make a window of zero width).
-    if (h == 0)
-        h = 1;
-    float ratio =  w * 1.0 / h;
+      if (h == 0)
+         h = 1;
+      float ratio =  w * 1.0 / h;
     
     // Use the Projection Matrix
-    glMatrixMode(GL_PROJECTION);
+      glMatrixMode(GL_PROJECTION);
     
     // Reset Matrix
-    glLoadIdentity();
+      glLoadIdentity();
     
     // Set the viewport to be the entire window
-    glViewport(0, 0, w, h);
+      glViewport(0, 0, w, h);
     
     // Set the correct perspective.
-    gluPerspective(45.0f, ratio, 0.1f, 100.0f);
+      gluPerspective(45.0f, ratio, 0.1f, 100.0f);
     
     // Get Back to the Modelview
-    glMatrixMode(GL_MODELVIEW);
-}
+      glMatrixMode(GL_MODELVIEW);
+   }
 
-void GLUTRedraw(void) {
+   void GLUTRedraw(void) {
     
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
- 	//fprintf(stderr, "%f\n", diff-shipTipY);
+   //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
-
-	// Awais
+   
+   // Awais
     // move camera and the ship forward
-	 if (deltaMoveX || deltaMoveZ)
-        computePos(deltaMoveX, deltaMoveZ);
-	 
-    moveForward();
-    updateShip();
-	 //Reset the intersection
-	 
+      if (deltaMoveX || deltaMoveZ)
+         computePos(deltaMoveX, deltaMoveZ);
+    
+      moveForward();
+      updateShip();
+    //Reset the intersection
+    
     // left-right-up-down movement in viewplane
     // angle movement in LR direction
-	 if (!left_intersection && !right_intersection)
-	 {
-    if (rightAngle)
-        peakRight();
-    if (leftAngle)
-        peakLeft();
-    if (!rightAngle)
-        lookStraightLR();
-	}
+      if (!left_intersection && !right_intersection)
+      {
+         if (rightAngle)
+            peakRight();
+         if (leftAngle)
+            peakLeft();
+         if (!rightAngle)
+            lookStraightLR();
+      }
     // angle movement in UD direction
-	 if (!top_intersection && !bottom_intersection)
-	 {
-    if (upAngle)
-        peakUp();
-    if (downAngle)
-        peakDown();
-    if (!upAngle && !downAngle)
-        lookStraightUD();
-    }
-    if (rotationAngle) 
-        computeRotation();
+      if (!top_intersection && !bottom_intersection)
+      {
+         if (upAngle)
+            peakUp();
+         if (downAngle)
+            peakDown();
+         if (!upAngle && !downAngle)
+            lookStraightUD();
+      }
+      if (rotationAngle) 
+         computeRotation();
     
     //Update enemies
-    updateEnemies();
+      updateEnemies();
     //Update projectiles
-    updateProjectiles();
+      updateProjectiles();
     
     // Initialize OpenGL drawing modes
-    glEnable(GL_LIGHTING);
-    glDisable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ZERO);
-    glDepthMask(true);
+      glEnable(GL_LIGHTING);
+      glDisable(GL_BLEND);
+      glBlendFunc(GL_ONE, GL_ZERO);
+      glDepthMask(true);
     
     // Clear window 
-    R3Rgb background = scene->background;
-    glClearColor(background[0], background[1], background[2], background[3]);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      R3Rgb background = scene->background;
+      glClearColor(background[0], background[1], background[2], background[3]);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Load camera
-    LoadCamera(&camera);
+      LoadCamera(&camera);
     
     // Load scene lights
-    LoadLights(scene);
+      LoadLights(scene);
     
     // Draw scene camera
     //DrawCamera(scene);
@@ -695,39 +709,39 @@ void GLUTRedraw(void) {
     //DrawLights(scene);
     
     // Draw scene surfaces
-    glEnable(GL_LIGHTING);
-	 
-	 front_intersection = false;
- 	 back_intersection = false;
-	 left_intersection = false;
-	 right_intersection = false;
- 	 top_intersection = false;
-	 bottom_intersection = false;
-	 
-    DrawScene(scene);
+      glEnable(GL_LIGHTING);
+    
+      front_intersection = false;
+      back_intersection = false;
+      left_intersection = false;
+      right_intersection = false;
+      top_intersection = false;
+      bottom_intersection = false;
+    
+      DrawScene(scene);
     
     
-    DrawProjectiles(scene);
+      DrawProjectiles(scene);
     
     // Draw scene edges
-    glDisable(GL_LIGHTING);
-    glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawScene(scene);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glDisable(GL_LIGHTING);
+      glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      DrawScene(scene);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-    glutSwapBuffers();
+      glutSwapBuffers();
     
-}
+   }
 
 // Awais
 //Makes the image into a texture, and returns the id of the texture
-GLuint loadTexture(Image* image) {
-    GLuint textureId;
-    glGenTextures(1, &textureId); //Make room for our texture
-    glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
+   GLuint loadTexture(Image* image) {
+      GLuint textureId;
+      glGenTextures(1, &textureId); //Make room for our texture
+      glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
     //Map the image to the texture
-    glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
+      glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
                  0,                            //0 for now
                  GL_RGB,                       //Format OpenGL uses for image
                  image->width, image->height,  //Width and height
@@ -736,247 +750,247 @@ GLuint loadTexture(Image* image) {
                  GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
                  //as unsigned numbers
                  image->pixels);               //The actual pixel data
-    return textureId; //Returns the id of the texture
-}
+      return textureId; //Returns the id of the texture
+   }
 
 // Awais
 // add any normal keyboard keys over here. Normal Keys are defined on glut pages
-void GLUTKeyboard(unsigned char key, int xx, int yy) {
-	// escape
-	if (key == 27)
-		exit(0);
-    // spacebar
-    else if (key == 32)
-        arwingShoot();
+   void GLUTKeyboard(unsigned char key, int xx, int yy) {
+   // escape
+      if (key == 27)
+         exit(0);
+      // spacebar
+      else if (key == 32)
+         arwingShoot();
     
-}
+   }
 
 // Awais
 // add any special keys over here. Special keys are defined on glut pages
-void GLUTSpecial(int key, int xx, int yy) {
+   void GLUTSpecial(int key, int xx, int yy) {
     
-	switch (key) {
-		case GLUT_KEY_LEFT : 
-			if(!right_intersection)
-			{
-			deltaMoveX = -moveStep;
-			leftAngle = true;
-			}
-			break;
-		case GLUT_KEY_RIGHT : 
-		{
-			if (!left_intersection)
-			{
-			deltaMoveX = moveStep; 
-			rightAngle = true;
-			}
-			break;
-		}
-		case GLUT_KEY_UP : 
-			if (!bottom_intersection)
-			{
-			deltaMoveZ = moveStep; 
-			upAngle = true;
-			}
-			break;
-		case GLUT_KEY_DOWN : 
-			if (!top_intersection)
-			{
-			deltaMoveZ = -moveStep;
-			downAngle = true;
-			}
-			break;
-		case GLUT_KEY_F1 :
-			rotationAngle = rotationStep;
-			break;
-		case GLUT_KEY_F2 :
-			rotationAngle = -rotationStep;
-			break;
-		case GLUT_KEY_F3 :
-			if (currView == INSIDE) {
-				ship->Translate(0.0,1.0,-6.0);	
-				currView = OUTSIDE;
-			}
-			else {
-				ship->Translate(0.0,-1.0,6.0);	
-				currView = INSIDE;
-			}
-			break;
-	}
-}
+      switch (key) {
+         case GLUT_KEY_LEFT : 
+            if(!right_intersection)
+            {
+               deltaMoveX = -moveStep;
+               leftAngle = true;
+            }
+            break;
+         case GLUT_KEY_RIGHT : 
+            {
+               if (!left_intersection)
+               {
+                  deltaMoveX = moveStep; 
+                  rightAngle = true;
+               }
+               break;
+            }
+         case GLUT_KEY_UP : 
+            if (!bottom_intersection)
+            {
+               deltaMoveZ = moveStep; 
+               upAngle = true;
+            }
+            break;
+         case GLUT_KEY_DOWN : 
+            if (!top_intersection)
+            {
+               deltaMoveZ = -moveStep;
+               downAngle = true;
+            }
+            break;
+         case GLUT_KEY_F1 :
+            rotationAngle = rotationStep;
+            break;
+         case GLUT_KEY_F2 :
+            rotationAngle = -rotationStep;
+            break;
+         case GLUT_KEY_F3 :
+            if (currView == INSIDE) {
+               ship->Translate(0.0,1.0,-6.0);	
+               currView = OUTSIDE;
+            }
+            else {
+               ship->Translate(0.0,-1.0,6.0);	
+               currView = INSIDE;
+            }
+            break;
+      }
+   }
 
 // Awais
 // release key tells what to do upon relese of a key
-void releaseKey(int key, int x, int y) {
+   void releaseKey(int key, int x, int y) {
     
-	switch (key) {
-		case GLUT_KEY_LEFT :
-			deltaMoveX = 0.0; 
-			leftAngle = false;
-			break;
-		case GLUT_KEY_RIGHT : 
-			deltaMoveX = 0.0;
-			rightAngle = false;
-			break;
-		case GLUT_KEY_UP :
-			deltaMoveZ = 0.0;
-			upAngle = false;
-			break;
-		case GLUT_KEY_DOWN : 
-			deltaMoveZ = 0.0; 
-			downAngle = false;
-			break;
-		case GLUT_KEY_F1 :
-			rotationAngle = 0.0;
-			break;
-		case GLUT_KEY_F2 :
-			rotationAngle = 0.0;
-			break;
-	}
-}
+      switch (key) {
+         case GLUT_KEY_LEFT :
+            deltaMoveX = 0.0; 
+            leftAngle = false;
+            break;
+         case GLUT_KEY_RIGHT : 
+            deltaMoveX = 0.0;
+            rightAngle = false;
+            break;
+         case GLUT_KEY_UP :
+            deltaMoveZ = 0.0;
+            upAngle = false;
+            break;
+         case GLUT_KEY_DOWN : 
+            deltaMoveZ = 0.0; 
+            downAngle = false;
+            break;
+         case GLUT_KEY_F1 :
+            rotationAngle = 0.0;
+            break;
+         case GLUT_KEY_F2 :
+            rotationAngle = 0.0;
+            break;
+      }
+   }
 
 // Awais
-void computePos(double dx, double dz) {
-	double x_move = deltaMoveX;
-	double y_move = deltaMoveZ;
-
-	if (left_intersection && x_move > 0)
-		x_move = 0*x_move;
-	if (right_intersection && x_move < 0)
-		x_move = 0*x_move;
-	if (top_intersection && y_move < 0)
-		y_move = 0*y_move;
-	if (bottom_intersection && y_move > 0)
-		y_move = 0*y_move;
-	
-	x += x_move;
-	z += y_move;	
-}
+   void computePos(double dx, double dz) {
+      double x_move = deltaMoveX;
+      double y_move = deltaMoveZ;
+   
+      if (left_intersection && x_move > 0)
+         x_move = 0*x_move;
+      if (right_intersection && x_move < 0)
+         x_move = 0*x_move;
+      if (top_intersection && y_move < 0)
+         y_move = 0*y_move;
+      if (bottom_intersection && y_move > 0)
+         y_move = 0*y_move;
+   
+      x += x_move;
+      z += y_move;	
+   }
 // Below: fncitons for angle movement
-void lookStraightLR() {
-    double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    if ((diff - shipTipX) > epsilon) {
-        deltaAngleLR = -angleStep;
-        ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-    }       
-    else if ((diff - shipTipX) < -epsilon) {
-        deltaAngleLR = angleStep;
-        ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-    }
-}
+   void lookStraightLR() {
+      double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+      if ((diff - shipTipX) > epsilon) {
+         deltaAngleLR = -angleStep;
+         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+      }       
+      else if ((diff - shipTipX) < -epsilon) {
+         deltaAngleLR = angleStep;
+         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+      }
+   }
 
-void lookStraightUD() {
-    double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    if ((diff - shipTipY) < -epsilon) {
-        deltaAngleUD = -angleStep;
-        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-    }       
-    else if ((diff - shipTipY) > epsilon) {
-        deltaAngleUD = angleStep;
-        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-    }
-}
+   void lookStraightUD() {
+      double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+      if ((diff - shipTipY) < -epsilon) {
+         deltaAngleUD = -angleStep;
+         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+      }       
+      else if ((diff - shipTipY) > epsilon) {
+         deltaAngleUD = angleStep;
+         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+      }
+   }
 
-void peakRight() {
-    double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    if ((diff - shipTipX) > -angleCutoffR) {
-        deltaAngleLR = -angleStep;
-        ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-	 }
-}
+   void peakRight() {
+      double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+      if ((diff - shipTipX) > -angleCutoffR) {
+         deltaAngleLR = -angleStep;
+         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+      }
+   }
 
-void peakLeft() {
-    double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    if ((diff - shipTipX) < angleCutoffL) {
-        deltaAngleLR = angleStep;
-        ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-    }
-}
+   void peakLeft() {
+      double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+      if ((diff - shipTipX) < angleCutoffL) {
+         deltaAngleLR = angleStep;
+         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+      }
+   }
 
-void peakUp() {
-    double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    if ((diff - shipTipY) > -angleCutoffU) {
-        deltaAngleUD = angleStep;
-        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-    }
-}
-void peakDown() {
-    double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    if ((diff - shipTipY) < angleCutoffD) {
-        deltaAngleUD = -angleStep;
-        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-    }
-}
+   void peakUp() {
+      double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+      if ((diff - shipTipY) > -angleCutoffU) {
+         deltaAngleUD = angleStep;
+         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+      }
+   }
+   void peakDown() {
+      double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+      if ((diff - shipTipY) < angleCutoffD) {
+         deltaAngleUD = -angleStep;
+         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+      }
+   }
 
 //Awais
 // move forward with a constant speed
-void moveForward() {
-	//Check if the ship is hitting anything; don't move camera forward if it is.
-	if (!front_intersection)
-		y += cameraSpeed;
-}
+   void moveForward() {
+   //Check if the ship is hitting anything; don't move camera forward if it is.
+      if (!front_intersection)
+         y += cameraSpeed;
+   }
 
-void computeRotation(void) {
-	ship->Rotate(rotationAngle,R3Line(ship->Center(), camera.up));
-}
+   void computeRotation(void) {
+      ship->Rotate(rotationAngle,R3Line(ship->Center(), camera.up));
+   }
 
 //Awais
 // movement for ship as camera moves
-void updateShip() {
-	//Check if the ship is hitting anything. Don't move it if it is.
-	double x_move = deltaMoveX;
-	double y_move = deltaMoveZ;
-	double z_move = -shipSpeed;
-	
-	if (left_intersection &&  x_move > 0)
-		x_move = 0* x_move;
-	if (right_intersection && x_move < 0)
-		x_move = 0*x_move;
-	if (top_intersection && y_move < 0)
-		y_move = 0*y_move;
-	if (bottom_intersection && y_move > 0)
-		y_move = 0*y_move;
-	if (front_intersection)
-		z_move = 0;
-	ship->Translate(x_move, y_move, z_move);
-}
+   void updateShip() {
+   //Check if the ship is hitting anything. Don't move it if it is.
+      double x_move = deltaMoveX;
+      double y_move = deltaMoveZ;
+      double z_move = -shipSpeed;
+   
+      if (left_intersection &&  x_move > 0)
+         x_move = 0* x_move;
+      if (right_intersection && x_move < 0)
+         x_move = 0*x_move;
+      if (top_intersection && y_move < 0)
+         y_move = 0*y_move;
+      if (bottom_intersection && y_move > 0)
+         y_move = 0*y_move;
+      if (front_intersection)
+         z_move = 0;
+      ship->Translate(x_move, y_move, z_move);
+   }
 
 
 //Kevin
 //have enemies move, shoot
-void updateEnemies(void)
-{
-    for (int i = 0; i < scene->NEnemies(); i++)
-    {
-        R3Vector y = *(new R3Vector(0,1,0));
-        SFEnemy *enemy = scene->Enemy(i);
+   void updateEnemies(void)
+   {
+      for (int i = 0; i < scene->NEnemies(); i++)
+      {
+         R3Vector y = *(new R3Vector(0,1,0));
+         SFEnemy *enemy = scene->Enemy(i);
         
-        if (!enemy->fixed)
-        {
+         if (!enemy->fixed)
+         {
             //move
-        }
+         }
         
         //shoot (will change to a static rate in the future)
-        if ((int)GetTime() % 4 == 0)
-        {
+         if ((int)GetTime() % 4 == 0)
+         {
             SFProjectile *proj = new SFProjectile(.3);
             R3Point arwingPos = ship_pos + shipSpeed * y;//ship->Center();
             R3Point enemyPos = enemy->position;//enemy->projectileSource;
             
             enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
             
-     //      printf("arwing pos %f:%f:%f\n", arwingPos.X(), arwingPos.Y(), arwingPos.Z());
+         //      printf("arwing pos %f:%f:%f\n", arwingPos.X(), arwingPos.Y(), arwingPos.Z());
             
-      //      printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
+         //      printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
             
             R3Vector projDir = arwingPos - enemyPos;
             
-     //       printf("difference vect %f:%f:%f\n", projDir.X(), projDir.Y(), projDir.Z());
+         //       printf("difference vect %f:%f:%f\n", projDir.X(), projDir.Y(), projDir.Z());
             
             //temporary code for simplification. projectile length = 1
             projDir.Normalize();
             
-        //    projDir *= 4;
+         //    projDir *= 4;
             
             proj->segment = *(new R3Segment(enemyPos, projDir));
             
@@ -1002,113 +1016,113 @@ void updateEnemies(void)
             //Note: specifically choosing NOT to merge bboxes with the generating enemy
             enemy->node->children.push_back(projNode);
             projNode->parent = enemy->node;
-        }
-    }
-}
+         }
+      }
+   }
 
 
 //move projectiles
-void updateProjectiles(void)
-{
-    for (int i = 0; i < scene->NProjectiles(); i++)
-    {
-        SFProjectile *proj = scene->Projectile(i);
+   void updateProjectiles(void)
+   {
+      for (int i = 0; i < scene->NProjectiles(); i++)
+      {
+         SFProjectile *proj = scene->Projectile(i);
         
         //calcluate for intersection with object on next move
         
         //move
-    //    printf("projectile endpoint %f:%f:%f\n", proj->segment.End().X(), proj->segment.End().Y(), proj->segment.End().Z());
+      //    printf("projectile endpoint %f:%f:%f\n", proj->segment.End().X(), proj->segment.End().Y(), proj->segment.End().Z());
         
-        proj->segment.Reset(proj->segment.Start() + proj->speed * proj->segment.Vector(), 
+         proj->segment.Reset(proj->segment.Start() + proj->speed * proj->segment.Vector(), 
                     proj->segment.End() + proj->speed * proj->segment.Vector());
         
-    //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
+      //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
         
-    }
-}
+      }
+   }
 
-void arwingShoot(void)
-{
-    R3Vector toLeftWing = *(new R3Vector(-1.5,-.5,-.5));
-    R3Vector toRightWing = *(new R3Vector(1.5,-.5,-.5));
+   void arwingShoot(void)
+   {
+      R3Vector toLeftWing = *(new R3Vector(-1.5,-.5,-.5));
+      R3Vector toRightWing = *(new R3Vector(1.5,-.5,-.5));
     
-    SFProjectile *left = new SFProjectile(.3);
-    SFProjectile *right = new SFProjectile(.3);
+      SFProjectile *left = new SFProjectile(.3);
+      SFProjectile *right = new SFProjectile(.3);
     
     //Kevin - I would like to get these shooting in the ship towards
     //rather than the camera, but this will do
-    left->segment = *(new R3Segment(ship_pos + toLeftWing, 2 * camera.towards));
-    right->segment = *(new R3Segment(ship_pos + toRightWing, 2 * camera.towards));
+      left->segment = *(new R3Segment(ship_pos + toLeftWing, 2 * camera.towards));
+      right->segment = *(new R3Segment(ship_pos + toRightWing, 2 * camera.towards));
     
-    scene->projectiles.push_back(left);
-    scene->projectiles.push_back(right);
+      scene->projectiles.push_back(left);
+      scene->projectiles.push_back(right);
     
     
     // Create scene graph node for left laser
-    R3Shape *shape = new R3Shape();
-    shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
-    shape->box = NULL;
-    shape->sphere = NULL;
-    shape->cylinder = NULL;
-    shape->cone = NULL;
-    shape->mesh = NULL;
-    shape->segment = &left->segment;
+      R3Shape *shape = new R3Shape();
+      shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
+      shape->box = NULL;
+      shape->sphere = NULL;
+      shape->cylinder = NULL;
+      shape->cone = NULL;
+      shape->mesh = NULL;
+      shape->segment = &left->segment;
     
-    R3Node *leftNode = new R3Node();
+      R3Node *leftNode = new R3Node();
     //note, this material should be the laser material later
-    leftNode->material = scene->arwingNode->material;
-    leftNode->shape = shape;
-    leftNode->bbox = left->segment.BBox();
+      leftNode->material = scene->arwingNode->material;
+      leftNode->shape = shape;
+      leftNode->bbox = left->segment.BBox();
     
     // Create scene graph node for right laser
-    shape = new R3Shape();
-    shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
-    shape->box = NULL;
-    shape->sphere = NULL;
-    shape->cylinder = NULL;
-    shape->cone = NULL;
-    shape->mesh = NULL;
-    shape->segment = &right->segment;
+      shape = new R3Shape();
+      shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
+      shape->box = NULL;
+      shape->sphere = NULL;
+      shape->cylinder = NULL;
+      shape->cone = NULL;
+      shape->mesh = NULL;
+      shape->segment = &right->segment;
     
-    R3Node *rightNode = new R3Node();
+      R3Node *rightNode = new R3Node();
     //note, this material should be the laser material later
-    rightNode->material = scene->arwingNode->material;
-    rightNode->shape = shape;
-    rightNode->bbox = right->segment.BBox();
+      rightNode->material = scene->arwingNode->material;
+      rightNode->shape = shape;
+      rightNode->bbox = right->segment.BBox();
     
     //Note: specifically choosing NOT to merge bboxes with the arwing
-    scene->arwingNode->children.push_back(leftNode);
-    scene->arwingNode->children.push_back(rightNode);
-    leftNode->parent = scene->arwingNode;
-    rightNode->parent = scene->arwingNode;
-}
+      scene->arwingNode->children.push_back(leftNode);
+      scene->arwingNode->children.push_back(rightNode);
+      leftNode->parent = scene->arwingNode;
+      rightNode->parent = scene->arwingNode;
+   }
 
 
 // Riley added this, just took some stuff out of main
 // for organizational purposes
-void GLUTInit(int *argc, char **argv) {
+   void GLUTInit(int *argc, char **argv) {
     // init GLUT and create window
-    glutInit(argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-    glutInitWindowPosition(100,100);
-    glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
-    glutCreateWindow("StarFox");
+      glutInit(argc, argv);
+      glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+      glutInitWindowPosition(100,100);
+      glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
+      glutCreateWindow("StarFox");
     
     // register callbacks
-    glutDisplayFunc(GLUTRedraw);
-    glutReshapeFunc(GLUTResize);
-    glutIdleFunc(GLUTRedraw);
+      glutDisplayFunc(GLUTRedraw);
+      glutReshapeFunc(GLUTResize);
+      glutIdleFunc(GLUTRedraw);
     
     // handlers
-    glutKeyboardFunc(GLUTKeyboard);
-    glutSpecialFunc(GLUTSpecial);
+      glutKeyboardFunc(GLUTKeyboard);
+      glutSpecialFunc(GLUTSpecial);
     
     // here are the new entries
-    glutIgnoreKeyRepeat(1);
-    glutSpecialUpFunc(releaseKey);
+      glutIgnoreKeyRepeat(1);
+      glutSpecialUpFunc(releaseKey);
     
     // OpenGL init
-    glEnable(GL_DEPTH_TEST);
+      glEnable(GL_DEPTH_TEST);
     // texturing
     /*	Image* image = loadBMP("images\\brick.bmp");
      texBrick = loadTexture(image);
@@ -1118,80 +1132,80 @@ void GLUTInit(int *argc, char **argv) {
      texStone = loadTexture(image);
      delete image; */
     
-    glEnable(GL_TEXTURE_2D);
-}
+      glEnable(GL_TEXTURE_2D);
+   }
 
 // Riley
 // More organizational stuff
 // Just in case we want it to be more complex later
-void GLUTMainLoop() {
-    setCumulativeTransformations(scene, scene->root, scene->root->transformation);
-    glutMainLoop();
-}
+   void GLUTMainLoop() {
+      setCumulativeTransformations(scene, scene->root, scene->root->transformation);
+      glutMainLoop();
+   }
 
 // Riley
 // Reading the scene
-R3Scene *
-ReadScene(const char *filename) {
+   R3Scene *
+   ReadScene(const char *filename) {
     // Allocate scene
-    R3Scene *scene = new R3Scene();
-    if (!scene) {
-        fprintf(stderr, "Unable to allocate scene\n");
-        return NULL;
-    }
+      R3Scene *scene = new R3Scene();
+      if (!scene) {
+         fprintf(stderr, "Unable to allocate scene\n");
+         return NULL;
+      }
     
     // Read file
-    if (!scene->Read(filename)) {
-        fprintf(stderr, "Unable to read scene from %s\n", filename);
-        return NULL;
-    }
+      if (!scene->Read(filename)) {
+         fprintf(stderr, "Unable to read scene from %s\n", filename);
+         return NULL;
+      }
     
     // Remember initial camera
-    camera = scene->camera;
+      camera = scene->camera;
     
     // Awais
     // set the global variables from the camera
-    x = camera.eye.X();
-    y = camera.eye.Y();
-    z = camera.eye.Z();
-    lx = camera.towards.X();
-    ly = camera.towards.Y();
-    lz = camera.towards.Z();
+      x = camera.eye.X();
+      y = camera.eye.Y();
+      z = camera.eye.Z();
+      lx = camera.towards.X();
+      ly = camera.towards.Y();
+      lz = camera.towards.Z();
     // get the ship
-    ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
-    shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
+      ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
+      shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+      shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+      shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
     
     // Return scene
-    return scene;
-}
+      return scene;
+   }
 
 //
-void setCumulativeTransformations(R3Scene *scene, R3Node *node, R3Matrix transformation)
-{
+   void setCumulativeTransformations(R3Scene *scene, R3Node *node, R3Matrix transformation)
+   {
     // Push transformation onto stack
-    glPushMatrix();
-    LoadMatrix(&node->transformation);
+      glPushMatrix();
+      LoadMatrix(&node->transformation);
     //Update the transformation
-    transformation *= node->transformation;	
+      transformation *= node->transformation;	
     
     //This shows how you would get the *proper* coordinates. 
     //YOU MUST APPLY THE TRANSFORMATION TO THE POINT FIRST.	
     //cout << (transformation * node->bbox.Centroid()).X() << endl;
-	
-	if (node->enemy != NULL)
-    {
-        node->cumulativeTransformation *= transformation;
-    }
+   
+      if (node->enemy != NULL)
+      {
+         node->cumulativeTransformation *= transformation;
+      }
     
-    for (int i = 0; i < (int) node->children.size(); i++) 
-    {
-        setCumulativeTransformations(scene, node->children[i], transformation);
-    }
+      for (int i = 0; i < (int) node->children.size(); i++) 
+      {
+         setCumulativeTransformations(scene, node->children[i], transformation);
+      }
     
-    glPopMatrix();
-}
+      glPopMatrix();
+   }
 
 ////////////////////////////////////////////////////////////
 // TIMER CODE
@@ -1203,9 +1217,9 @@ void setCumulativeTransformations(R3Scene *scene, R3Node *node, R3Matrix transfo
 #  include <sys/time.h>
 #endif
 
-static double GetTime(void)
-{
-#ifdef _WIN32
+   static double GetTime(void)
+   {
+   #ifdef _WIN32
     // Return number of seconds since start of execution
     static int first = 1;
     static LARGE_INTEGER timefreq;
@@ -1227,38 +1241,38 @@ static double GetTime(void)
                 (double) start_timevalue.QuadPart) / 
         (double) timefreq.QuadPart;
     }
-#else
+   #else
     // Return number of seconds since start of execution
-    static int first = 1;
-    static struct timeval start_timevalue;
+      static int first = 1;
+      static struct timeval start_timevalue;
     
     // Check if this is the first time
-    if (first) {
+      if (first) {
         // Initialize first time
-        gettimeofday(&start_timevalue, NULL);
-        first = 0;
-        return 0;
-    }
-    else {
+         gettimeofday(&start_timevalue, NULL);
+         first = 0;
+         return 0;
+      }
+      else {
         // Return time since start
-        struct timeval current_timevalue;
-        gettimeofday(&current_timevalue, NULL);
-        int secs = current_timevalue.tv_sec - start_timevalue.tv_sec;
-        int usecs = current_timevalue.tv_usec - start_timevalue.tv_usec;
-        return (double) (secs + 1.0E-6F * usecs);
-    }
-#endif
-}
+         struct timeval current_timevalue;
+         gettimeofday(&current_timevalue, NULL);
+         int secs = current_timevalue.tv_sec - start_timevalue.tv_sec;
+         int usecs = current_timevalue.tv_usec - start_timevalue.tv_usec;
+         return (double) (secs + 1.0E-6F * usecs);
+      }
+   #endif
+   }
 
-int main(int argc, char **argv) {
+   int main(int argc, char **argv) {
     
-    GLUTInit(&argc, argv);
+      GLUTInit(&argc, argv);
     
     // Allocate mesh
-    scene = ReadScene(input_scene_name);
-    if(!scene) exit(-1);
+      scene = ReadScene(input_scene_name);
+      if(!scene) exit(-1);
     
-    GLUTMainLoop();
+      GLUTMainLoop();
     
-    return 0;
-}
+      return 0;
+   }
