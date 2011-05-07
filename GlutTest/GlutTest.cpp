@@ -53,6 +53,9 @@
    double angleCutoffU = 0.2;
    double angleCutoffD = 0.1;
 
+// camera angles
+double cameraAngleLR = 0.0;
+double cameraAngleUD = 0.0;
 
 // intersction
    bool front_intersection = false;
@@ -217,7 +220,7 @@
       glLoadIdentity();
       gluLookAt(x, y, z,
               x+lx, y+ly,  z+lz,
-              0, 1,  0); 
+              0, 0,  1); 
    }
 
    void LoadLights(R3Scene *scene)
@@ -642,7 +645,9 @@
    }
 
    void GLUTRedraw(void) {
-    
+	//fprintf(stderr, "X\n%f\n%f\n", ship->Center().X(), ship_pos.X());
+	//fprintf(stderr, "Y\n%f\n%f\n", ship->Center().Y(), ship_pos.Y());
+	//fprintf(stderr, "Z\n%f\n%f\n", ship->Center().Z(), ship_pos.Z());
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
    //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
@@ -658,15 +663,15 @@
     
     // left-right-up-down movement in viewplane
     // angle movement in LR direction
-      if (!left_intersection && !right_intersection)
-      {
-         if (rightAngle)
-            peakRight();
-         if (leftAngle)
-            peakLeft();
-         if (!rightAngle)
-            lookStraightLR();
-      }
+	 if (!left_intersection && !right_intersection)
+	 {
+    if (rightAngle)
+        peakRight();
+    if (leftAngle)
+        peakLeft();
+    if (!rightAngle && !leftAngle)
+        lookStraightLR();
+	}
     // angle movement in UD direction
       if (!top_intersection && !bottom_intersection)
       {
@@ -769,55 +774,58 @@
 // add any special keys over here. Special keys are defined on glut pages
    void GLUTSpecial(int key, int xx, int yy) {
     
-      switch (key) {
-         case GLUT_KEY_LEFT : 
-            if(!right_intersection)
-            {
-               deltaMoveX = -moveStep;
-               leftAngle = true;
-            }
-            break;
-         case GLUT_KEY_RIGHT : 
-            {
-               if (!left_intersection)
-               {
-                  deltaMoveX = moveStep; 
-                  rightAngle = true;
-               }
-               break;
-            }
-         case GLUT_KEY_UP : 
-            if (!bottom_intersection)
-            {
-               deltaMoveZ = moveStep; 
-               upAngle = true;
-            }
-            break;
-         case GLUT_KEY_DOWN : 
-            if (!top_intersection)
-            {
-               deltaMoveZ = -moveStep;
-               downAngle = true;
-            }
-            break;
-         case GLUT_KEY_F1 :
-            rotationAngle = rotationStep;
-            break;
-         case GLUT_KEY_F2 :
-            rotationAngle = -rotationStep;
-            break;
-         case GLUT_KEY_F3 :
-            if (currView == INSIDE) {
-               ship->Translate(0.0,1.0,-6.0);	
-               currView = OUTSIDE;
-            }
-            else {
-               ship->Translate(0.0,-1.0,6.0);	
-               currView = INSIDE;
-            }
-            break;
-      }
-   }
+	switch (key) {
+		case GLUT_KEY_LEFT : 
+			if(!right_intersection)
+			{
+			deltaMoveX = -moveStep;
+			leftAngle = true;
+			}
+			break;
+		case GLUT_KEY_RIGHT : 
+		{
+			if (!left_intersection)
+			{
+			deltaMoveX = moveStep; 
+			rightAngle = true;
+			}
+			break;
+		}
+		case GLUT_KEY_UP : 
+			if (!bottom_intersection)
+			{
+			deltaMoveZ = moveStep; 
+			upAngle = true;
+			}
+			break;
+		case GLUT_KEY_DOWN : 
+			if (!top_intersection)
+			{
+			deltaMoveZ = -moveStep;
+			downAngle = true;
+			}
+			break;
+		case GLUT_KEY_F1 :
+			rotationAngle = rotationStep;
+			break;
+		case GLUT_KEY_F2 :
+			rotationAngle = -rotationStep;
+			break;
+		case GLUT_KEY_F3 :
+			if (currView == INSIDE) {
+				y += -6;
+				z += -1;
+				currView = OUTSIDE;
+			}
+			else {
+				y += 6;
+				z += 1;
+				currView = INSIDE;
+			}
+			break;
+
+	}
+}
 
 // Awais
 // release key tells what to do upon relese of a key
@@ -866,61 +874,103 @@
       x += x_move;
       z += y_move;	
    }
+
 // Below: fncitons for angle movement
-   void lookStraightLR() {
-      double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-      if ((diff - shipTipX) > epsilon) {
-         deltaAngleLR = -angleStep;
-         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-      }       
-      else if ((diff - shipTipX) < -epsilon) {
-         deltaAngleLR = angleStep;
-         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-      }
-   }
+void lookStraightLR() {
+    double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+    if ((diff - shipTipX) > epsilon) {
+        deltaAngleLR = -angleStep;
+        ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+		if (currView == INSIDE) {
+			cameraAngleLR += -deltaAngleLR;
+			lx = sin(cameraAngleLR);
+			ly = cos(cameraAngleLR);
+		}
+    }       
+    else if ((diff - shipTipX) < -epsilon) {
+        deltaAngleLR = angleStep;
+        ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+		if (currView == INSIDE) {
+			cameraAngleLR += -deltaAngleLR;
+			lx = sin(cameraAngleLR);
+			ly = cos(cameraAngleLR);
+		}
+	}
+}
 
-   void lookStraightUD() {
-      double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-      if ((diff - shipTipY) < -epsilon) {
-         deltaAngleUD = -angleStep;
-         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-      }       
-      else if ((diff - shipTipY) > epsilon) {
-         deltaAngleUD = angleStep;
-         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-      }
-   }
+void lookStraightUD() {
+    double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+    if ((diff - shipTipY) < -epsilon) {
+        deltaAngleUD = -angleStep;
+        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+		if (currView == INSIDE) {
+			cameraAngleUD += deltaAngleUD;
+			lz = sin(cameraAngleUD);
+			ly = cos(cameraAngleUD);
+		}
+    }       
+    else if ((diff - shipTipY) > epsilon) {
+        deltaAngleUD = angleStep;
+        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+		if (currView == INSIDE) {
+			cameraAngleUD += deltaAngleUD;
+			lz = sin(cameraAngleUD);
+			ly = cos(cameraAngleUD);
+		}
+    }
+}
 
-   void peakRight() {
-      double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-      if ((diff - shipTipX) > -angleCutoffR) {
-         deltaAngleLR = -angleStep;
-         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-      }
-   }
+void peakRight() {
+    double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+    if ((diff - shipTipX) > -angleCutoffR) {
+        deltaAngleLR = -angleStep;
+        ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
+		if (currView == INSIDE) {
+			cameraAngleLR += -deltaAngleLR;
+			lx = sin(cameraAngleLR);
+			ly = cos(cameraAngleLR);
+		}
+	 }
+}
 
-   void peakLeft() {
-      double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-      if ((diff - shipTipX) < angleCutoffL) {
-         deltaAngleLR = angleStep;
-         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-      }
-   }
+void peakLeft() {
+    double diff = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+    if ((diff - shipTipX) < angleCutoffL) {
+        deltaAngleLR = angleStep;
+        ship->Rotate(angleStep,R3Line(ship->Center(), camera.towards));
+		if (currView == INSIDE) {
+			cameraAngleLR += -deltaAngleLR;
+			lx = sin(cameraAngleLR);
+			ly = cos(cameraAngleLR);
+		}
+    }
+}
 
-   void peakUp() {
-      double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-      if ((diff - shipTipY) > -angleCutoffU) {
-         deltaAngleUD = angleStep;
-         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-      }
-   }
-   void peakDown() {
-      double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-      if ((diff - shipTipY) < angleCutoffD) {
-         deltaAngleUD = -angleStep;
-         ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
-      }
-   }
+void peakUp() {
+    double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+    if ((diff - shipTipY) > -angleCutoffU) {
+        deltaAngleUD = angleStep;
+        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+		if (currView == INSIDE) {
+			cameraAngleUD += deltaAngleUD;
+			lz = sin(cameraAngleUD);
+			ly = cos(cameraAngleUD);
+		}
+    }
+}
+
+void peakDown() {
+    double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+    if ((diff - shipTipY) < angleCutoffD) {
+        deltaAngleUD = -angleStep;
+        ship->Rotate(deltaAngleUD,R3Line(ship->Center(), camera.right));
+		if (currView == INSIDE) {
+			cameraAngleUD += deltaAngleUD;
+			lz = sin(cameraAngleUD);
+			ly = cos(cameraAngleUD);
+		}
+    }
+}
 
 //Awais
 // move forward with a constant speed
