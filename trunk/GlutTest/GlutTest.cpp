@@ -19,6 +19,7 @@ static int GLUTwindow_width = 800;
 // START: Varaibles by Awais
 
 double epsilon = 10e-5;
+double collision_epsilon = .1;
 
 // this is Arwing
 R3Mesh *ship;
@@ -54,6 +55,13 @@ double angleCutoffD = 0.1;
 
 // intersction
 bool front_intersection = false;
+bool back_intersection = false;
+bool left_intersection = false;
+bool right_intersection = false;
+bool top_intersection = false;
+bool bottom_intersection = false;
+
+
 R3Point ship_pos = R3Point(0,0,0);
 
 // rotation
@@ -61,8 +69,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed varibales
-double cameraSpeed = 0.1;
-double shipSpeed = 0.1;
+double cameraSpeed = 0.01;
+double shipSpeed = 0.01;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -73,7 +81,7 @@ enum view currView = OUTSIDE;
 static double GetTime(void);
 
 //have the projectile sources been set (transformed properly
-static int sourcesSet = 0;
+
 
 
 void DrawShape(R3Shape *shape)
@@ -312,6 +320,38 @@ void LoadLights(R3Scene *scene)
 }
 
 
+void compute_intersections(R3Point p, R3Point c, double xmid, 
+									double ymid, double zmid)
+{
+	double front_diff = 0;
+	double top_diff = 0;
+	double bottom_diff = 0;
+	double left_diff = 0;
+	double right_diff = 0;
+	double back_diff = 0;
+	
+	front_diff = abs(p.Y() - c.Y() + ymid +  0);
+	back_diff = abs(p.Y() - c.Y() - ymid -  0);
+	left_diff = abs(p.X() - c.X() + xmid +  0);
+	right_diff = abs(p.X() - c.X() - xmid -  0);
+	top_diff = abs(p.Z() - c.Z() - zmid -  0 );
+	bottom_diff = abs(p.Z() - c.Z() + zmid +  0 );
+	
+	if (front_diff <= collision_epsilon)
+		front_intersection = true;
+	if (back_diff <= collision_epsilon)
+		back_intersection = true;
+	if (left_diff <= collision_epsilon)
+		left_intersection = true;
+	if (right_diff <= collision_epsilon)
+		right_intersection = true;
+	if (top_diff <= collision_epsilon)
+		top_intersection = true;
+	if (bottom_diff <= collision_epsilon)
+		bottom_intersection = true;
+}
+
+
 //Updated this to find when the ship is inside object bboxes
 //Also made method adjust node coordinates for transformations
 void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
@@ -368,12 +408,13 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
 		  ymid = node->shape->cylinder->Radius();
 		  zmid = node->shape->cylinder->Height();
 		}
-		//Check if we have an intersection and set the right boolean
-	 	if (p.Z() < c.Z() + zmid && p.Z() > c.Z() - zmid
-      &&  p.Y() < c.Y() + ymid && p.Y() > c.Y() - ymid
-      &&  p.X() < c.X() + xmid && p.X() > c.X() - xmid)
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid +  0 ) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
 		{
-			front_intersection = true;
+			compute_intersections(p, c, xmid, ymid, zmid);
+			cout << front_intersection << endl;
 		}
 		
 	 }
@@ -520,30 +561,34 @@ void GLUTRedraw(void) {
 
 	// Awais
     // move camera and the ship forward
+	 if (deltaMoveX || deltaMoveZ)
+        computePos(deltaMoveX, deltaMoveZ);
+	 
     moveForward();
     updateShip();
 	 //Reset the intersection
-	 front_intersection = false;
-	 
 	 
     // left-right-up-down movement in viewplane
-    if (deltaMoveX || deltaMoveZ)
-        computePos(deltaMoveX, deltaMoveZ);
     // angle movement in LR direction
+	 if (!left_intersection && !right_intersection)
+	 {
     if (rightAngle)
         peakRight();
     if (leftAngle)
         peakLeft();
-    if (!rightAngle && !leftAngle)
+    if (!rightAngle)
         lookStraightLR();
+	}
     // angle movement in UD direction
+	 if (!top_intersection && !bottom_intersection)
+	 {
     if (upAngle)
         peakUp();
     if (downAngle)
         peakDown();
     if (!upAngle && !downAngle)
         lookStraightUD();
-    
+    }
     if (rotationAngle) 
         computeRotation();
     
@@ -577,11 +622,18 @@ void GLUTRedraw(void) {
     
     // Draw scene surfaces
     glEnable(GL_LIGHTING);
+	 
+	 front_intersection = false;
+ 	 back_intersection = false;
+	 left_intersection = false;
+	 right_intersection = false;
+ 	 top_intersection = false;
+	 bottom_intersection = false;
+	 
     DrawScene(scene);
     
     
     DrawProjectiles(scene);
-    
     
     // Draw scene edges
     glDisable(GL_LIGHTING);
@@ -628,20 +680,34 @@ void GLUTSpecial(int key, int xx, int yy) {
     
 	switch (key) {
 		case GLUT_KEY_LEFT : 
+			if(!right_intersection)
+			{
 			deltaMoveX = -moveStep;
 			leftAngle = true;
+			}
 			break;
 		case GLUT_KEY_RIGHT : 
+		{
+			if (!left_intersection)
+			{
 			deltaMoveX = moveStep; 
 			rightAngle = true;
+			}
 			break;
+		}
 		case GLUT_KEY_UP : 
+			if (!bottom_intersection)
+			{
 			deltaMoveZ = moveStep; 
 			upAngle = true;
+			}
 			break;
 		case GLUT_KEY_DOWN : 
+			if (!top_intersection)
+			{
 			deltaMoveZ = -moveStep;
 			downAngle = true;
+			}
 			break;
 		case GLUT_KEY_F1 :
 			rotationAngle = rotationStep;
@@ -694,8 +760,20 @@ void releaseKey(int key, int x, int y) {
 
 // Awais
 void computePos(double dx, double dz) {
-	x += deltaMoveX;
-	z += deltaMoveZ;	
+	double x_move = deltaMoveX;
+	double y_move = deltaMoveZ;
+
+	if (left_intersection && x_move > 0)
+		x_move = 0*x_move;
+	if (right_intersection && x_move < 0)
+		x_move = 0*x_move;
+	if (top_intersection && y_move < 0)
+		y_move = 0*y_move;
+	if (bottom_intersection && y_move > 0)
+		y_move = 0*y_move;
+	
+	x += x_move;
+	z += y_move;	
 }
 // Below: fncitons for angle movement
 void lookStraightLR() {
@@ -727,7 +805,7 @@ void peakRight() {
     if ((diff - shipTipX) > -angleCutoffR) {
         deltaAngleLR = -angleStep;
         ship->Rotate(deltaAngleLR,R3Line(ship->Center(), camera.towards));
-    }
+	 }
 }
 
 void peakLeft() {
@@ -769,10 +847,21 @@ void computeRotation(void) {
 // movement for ship as camera moves
 void updateShip() {
 	//Check if the ship is hitting anything. Don't move it if it is.
-	if (!front_intersection)
-		ship->Translate(deltaMoveX,deltaMoveZ,-shipSpeed);
-	else
-		ship->Translate(deltaMoveX,deltaMoveZ,0);
+	double x_move = deltaMoveX;
+	double y_move = deltaMoveZ;
+	double z_move = -shipSpeed;
+	
+	if (left_intersection &&  x_move > 0)
+		x_move = 0* x_move;
+	if (right_intersection && x_move < 0)
+		x_move = 0*x_move;
+	if (top_intersection && y_move < 0)
+		y_move = 0*y_move;
+	if (bottom_intersection && y_move > 0)
+		y_move = 0*y_move;
+	if (front_intersection)
+		z_move = 0;
+	ship->Translate(x_move, y_move, z_move);
 }
 
 
