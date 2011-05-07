@@ -346,7 +346,7 @@ void compute_intersections(R3Point p, R3Point c, double xmid,
 	if (top_diff <= collision_epsilon)
 		top_intersection = true;
 	if (bottom_diff <= collision_epsilon)
-		bottom_intersection = true;
+		bottom_intersection = true;	
 }
 
 
@@ -404,10 +404,10 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
 		  c = transformation * node->shape->cylinder->Center();
 		  xmid = node->shape->cylinder->Radius();
 		  ymid = node->shape->cylinder->Radius();
-		  zmid = node->shape->cylinder->Height();
+		  zmid = node->shape->cylinder->Height()/2;
 		}
 		//Check if we have an intersection and set the right booleans
-	 	if (p.Z() < (c.Z() + zmid +  0 ) && (p.Z() > c.Z() - zmid -  0 )
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
       &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
       &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
 		{
@@ -415,6 +415,60 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
 			//cout << front_intersection << endl;
 		}
 		
+		p.SetY(p.Y() + ship->Radius());
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+		{
+			compute_intersections(p, c, xmid, ymid, zmid);
+			//cout << front_intersection << endl;
+		}
+		p.SetY(p.Y() - ship->Radius());
+		
+		p.SetX(p.X() + ship->Radius());
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+		{
+			compute_intersections(p, c, xmid, ymid, zmid);
+			//cout << front_intersection << endl;
+		}
+		p.SetX(p.X() - ship->Radius());
+		
+		p.SetX(p.X() - ship->Radius());
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+		{
+			compute_intersections(p, c, xmid, ymid, zmid);
+			//cout << front_intersection << endl;
+		}
+		p.SetX(p.X() + ship->Radius());
+		
+		p.SetZ(p.Z() - ship->Radius()/5);
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+		{
+			compute_intersections(p, c, xmid, ymid, zmid);
+			//cout << front_intersection << endl;
+		}
+		p.SetZ(p.Z() + ship->Radius()/5);
+		
+		p.SetZ(p.Z() + ship->Radius()/5);
+		//Check if we have an intersection and set the right booleans
+	 	if (p.Z() < (c.Z() + zmid + 0) && (p.Z() > c.Z() - zmid -  0 )
+      &&  p.Y() < (c.Y() + ymid +  0) && p.Y() > (c.Y() - ymid -  0)
+      &&  p.X() < (c.X() + xmid +  0) && p.X() > (c.X() - xmid -  0))
+		{
+			compute_intersections(p, c, xmid, ymid, zmid);
+			//cout << front_intersection << endl;
+		}
+		p.SetZ(p.Z() - ship->Radius()/5);
 	 }
 	 
     // Load material
