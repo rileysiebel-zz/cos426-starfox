@@ -468,6 +468,7 @@ Read(const char *filename, R3Node *node)
             // Create shape node
             R3Node *node = new R3Node();
             node->transformation = R3identity_matrix;
+            node->cumulativeTransformation = R3identity_matrix;
             node->material = material;
             node->shape = shape;
             node->bbox = *box;

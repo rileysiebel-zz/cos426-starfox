@@ -14,6 +14,8 @@
 # include <GL/glut.h>
 #endif
 
+
+
 void GLUTResize(int w, int h);
 //static void drawBrickBox(GLfloat size, GLenum type);
 //void glutSolidBrickCube(GLdouble size);
@@ -37,7 +39,7 @@ void computeRotation(void);
 //enemy and projectile functions
 void updateEnemies(void);
 void updateProjectiles(void);
-
+void arwingShoot(void);
 
 void GLUTRedraw(void);
 void GLUTKeyboard(unsigned char key, int xx, int yy);

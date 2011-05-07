@@ -69,8 +69,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed varibales
-double cameraSpeed = 0.01;
-double shipSpeed = 0.01;
+double cameraSpeed = 0.05;
+double shipSpeed = 0.05;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -79,9 +79,7 @@ enum view currView = OUTSIDE;
 
 
 static double GetTime(void);
-
-//have the projectile sources been set (transformed properly
-
+void setCumulativeTransformations(R3Scene *scene, R3Node *node, R3Matrix transformation);
 
 
 void DrawShape(R3Shape *shape)
@@ -671,6 +669,9 @@ void GLUTKeyboard(unsigned char key, int xx, int yy) {
 	// escape
 	if (key == 27)
 		exit(0);
+    // spacebar
+    else if (key == 32)
+        arwingShoot();
     
 }
 
@@ -880,25 +881,21 @@ void updateEnemies(void)
         }
         
         //shoot (will change to a static rate in the future)
-        if ((int)GetTime() % 2 == 0)
+        if ((int)GetTime() % 4 == 0)
         {
-            SFProjectile *proj = new SFProjectile(.01);
-            R3Point arwingPos = ship->Center();
+            SFProjectile *proj = new SFProjectile(.3);
+            R3Point arwingPos = ship_pos + shipSpeed * y;//ship->Center();
             R3Point enemyPos = enemy->position;//enemy->projectileSource;
             
+            enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
             
-            printf("arwing pos %f:%f:%f\n", arwingPos.X(), arwingPos.Y(), arwingPos.Z());
+     //      printf("arwing pos %f:%f:%f\n", arwingPos.X(), arwingPos.Y(), arwingPos.Z());
             
-            printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
+      //      printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
             
-       //     glPushMatrix();
-        //    LoadMatrix(&scene->arwingNode->transformation);
-         //   arwingPos.InverseTransform(enemy->node->transformation);
-         //   arwingPos.Transform(scene->arwingNode->transformation);
             R3Vector projDir = arwingPos - enemyPos;
-         //   R3Vector projDir = (arwingPos + shipSpeed * z) - enemyPos;
             
-            printf("difference vect %f:%f:%f\n", projDir.X(), projDir.Y(), projDir.Z());
+     //       printf("difference vect %f:%f:%f\n", projDir.X(), projDir.Y(), projDir.Z());
             
             //temporary code for simplification. projectile length = 1
             projDir.Normalize();
@@ -921,6 +918,7 @@ void updateEnemies(void)
             shape->segment = &proj->segment;
             
             R3Node *projNode = new R3Node();
+            //note, this material should be the laser material later
             projNode->material = enemy->node->material;
             projNode->shape = shape;
             projNode->bbox = proj->segment.BBox();
@@ -928,10 +926,6 @@ void updateEnemies(void)
             //Note: specifically choosing NOT to merge bboxes with the generating enemy
             enemy->node->children.push_back(projNode);
             projNode->parent = enemy->node;
-            
-            
-            
-     //       glPopMatrix();
         }
     }
 }
@@ -955,6 +949,62 @@ void updateProjectiles(void)
     //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
         
     }
+}
+
+void arwingShoot(void)
+{
+    R3Vector toLeftWing = *(new R3Vector(-1.5,-.5,-.5));
+    R3Vector toRightWing = *(new R3Vector(1.5,-.5,-.5));
+    
+    SFProjectile *left = new SFProjectile(.3);
+    SFProjectile *right = new SFProjectile(.3);
+    
+    //Kevin - I would like to get these shooting in the ship towards
+    //rather than the camera, but this will do
+    left->segment = *(new R3Segment(ship_pos + toLeftWing, 2 * camera.towards));
+    right->segment = *(new R3Segment(ship_pos + toRightWing, 2 * camera.towards));
+    
+    scene->projectiles.push_back(left);
+    scene->projectiles.push_back(right);
+    
+    
+    // Create scene graph node for left laser
+    R3Shape *shape = new R3Shape();
+    shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
+    shape->box = NULL;
+    shape->sphere = NULL;
+    shape->cylinder = NULL;
+    shape->cone = NULL;
+    shape->mesh = NULL;
+    shape->segment = &left->segment;
+    
+    R3Node *leftNode = new R3Node();
+    //note, this material should be the laser material later
+    leftNode->material = scene->arwingNode->material;
+    leftNode->shape = shape;
+    leftNode->bbox = left->segment.BBox();
+    
+    // Create scene graph node for right laser
+    shape = new R3Shape();
+    shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
+    shape->box = NULL;
+    shape->sphere = NULL;
+    shape->cylinder = NULL;
+    shape->cone = NULL;
+    shape->mesh = NULL;
+    shape->segment = &right->segment;
+    
+    R3Node *rightNode = new R3Node();
+    //note, this material should be the laser material later
+    rightNode->material = scene->arwingNode->material;
+    rightNode->shape = shape;
+    rightNode->bbox = right->segment.BBox();
+    
+    //Note: specifically choosing NOT to merge bboxes with the arwing
+    scene->arwingNode->children.push_back(leftNode);
+    scene->arwingNode->children.push_back(rightNode);
+    leftNode->parent = scene->arwingNode;
+    rightNode->parent = scene->arwingNode;
 }
 
 
@@ -999,6 +1049,7 @@ void GLUTInit(int *argc, char **argv) {
 // More organizational stuff
 // Just in case we want it to be more complex later
 void GLUTMainLoop() {
+    setCumulativeTransformations(scene, scene->root, scene->root->transformation);
     glutMainLoop();
 }
 
@@ -1038,6 +1089,32 @@ ReadScene(const char *filename) {
     
     // Return scene
     return scene;
+}
+
+//
+void setCumulativeTransformations(R3Scene *scene, R3Node *node, R3Matrix transformation)
+{
+    // Push transformation onto stack
+    glPushMatrix();
+    LoadMatrix(&node->transformation);
+    //Update the transformation
+    transformation *= node->transformation;	
+    
+    //This shows how you would get the *proper* coordinates. 
+    //YOU MUST APPLY THE TRANSFORMATION TO THE POINT FIRST.	
+    //cout << (transformation * node->bbox.Centroid()).X() << endl;
+	
+	if (node->enemy != NULL)
+    {
+        node->cumulativeTransformation *= transformation;
+    }
+    
+    for (int i = 0; i < (int) node->children.size(); i++) 
+    {
+        setCumulativeTransformations(scene, node->children[i], transformation);
+    }
+    
+    glPopMatrix();
 }
 
 ////////////////////////////////////////////////////////////
