@@ -6,6 +6,7 @@
 
 struct SFEnemy;
 struct SFProjectile;
+enum {FIXED = 1};
 
 // Constant definitions
 
