@@ -35,6 +35,11 @@ void lookStraightLR(void);
 void lookStraightUD(void);
 void computeRotation(void);
 
+// display txt
+void renderBitmapString(double x, double y, void *font, char *string);
+void setOrthographicProjection(void);
+void restorePerspectiveProjection(void);
+void writeAltitude(void);
 
 //enemy and projectile functions
 void updateEnemies(void);

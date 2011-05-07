@@ -645,13 +645,13 @@ double cameraAngleUD = 0.0;
    }
 
    void GLUTRedraw(void) {
-	//fprintf(stderr, "X\n%f\n%f\n", ship->Center().X(), ship_pos.X());
+	//fprintf(stderr, "%f\n", ship_pos.Z());
 	//fprintf(stderr, "Y\n%f\n%f\n", ship->Center().Y(), ship_pos.Y());
 	//fprintf(stderr, "Z\n%f\n%f\n", ship->Center().Z(), ship_pos.Z());
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
    //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
-   
+
    // Awais
     // move camera and the ship forward
       if (deltaMoveX || deltaMoveZ)
@@ -734,8 +734,11 @@ double cameraAngleUD = 0.0;
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       DrawScene(scene);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    
-      glutSwapBuffers();
+
+	// Write The altitude
+	writeAltitude();
+
+	glutSwapBuffers();
     
    }
 
@@ -823,7 +826,6 @@ double cameraAngleUD = 0.0;
 				currView = INSIDE;
 			}
 			break;
-
 	}
 }
 
@@ -1005,6 +1007,75 @@ void peakDown() {
       ship->Translate(x_move, y_move, z_move);
    }
 
+//Awais
+// code adapted from http://www.lighthouse3d.com
+// for displaying text on the screen
+void renderBitmapString(double x, double y, void *font, char *string) {
+  char *c;
+  glRasterPos2f(x, y);
+  for (c=string; *c != '\0'; c++) {
+    glutBitmapCharacter(font, *c);
+  }
+}
+
+// Awais
+// code adapted from http://www.lighthouse3d.com
+// used for text display
+void setOrthographicProjection() {
+
+	// switch to projection mode
+	glMatrixMode(GL_PROJECTION);
+
+	// save previous matrix which contains the
+	//settings for the perspective projection
+	glPushMatrix();
+
+	// reset matrix
+	glLoadIdentity();
+
+	// set a 2D orthographic projection
+	gluOrtho2D(0, 800, 0, 800);
+	
+	// invert the y axis, down is positive
+	glScalef(1, -1, 1);
+
+	// mover the origin from the bottom left corner
+	// to the upper left corner
+	glTranslatef(0, -800, 0);
+
+	// switch back to modelview mode
+	glMatrixMode(GL_MODELVIEW);
+}
+
+//Awais
+// code adapted from http://www.lighthouse3d.com
+// used for text display
+void restorePerspectiveProjection() {
+
+	glMatrixMode(GL_PROJECTION);
+	// restore previous projection matrix
+	glPopMatrix();
+
+	// get back to modelview mode
+	glMatrixMode(GL_MODELVIEW);
+}
+
+// Awais
+// display altitude
+void writeAltitude(void) {
+	setOrthographicProjection();
+	glPushMatrix();
+	glLoadIdentity();
+	char number1[256];
+	sprintf(number1,"%.0f",ship_pos.Z()*10-14);
+	char *quant1 = "Altitude: ";
+	char *unit1 = " units";
+	char *result1 = new char[strlen(quant1)+strlen(number1)+strlen(unit1)];
+	sprintf(result1,"%s%s%s",quant1,number1,unit1);
+	renderBitmapString(10,20,GLUT_BITMAP_HELVETICA_18,result1);
+	glPopMatrix();
+	restorePerspectiveProjection();
+}
 
 //Kevin
 //have enemies move, shoot
