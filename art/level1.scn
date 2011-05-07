@@ -27,9 +27,3 @@ begin -1
  0 0 0 1
  include Corneria_City.scn
 end
-
-
-turret 
- -1
- -4 -8 8
- 4 10 12
