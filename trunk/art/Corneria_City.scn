@@ -9,7 +9,7 @@ begin
  0 1 0 0
  0 0 1 1
  0 0 0 1
- include T-building-turret.scn
+ include T-building.scn
 end
 
 begin
@@ -18,7 +18,7 @@ begin
   0 1 0 20
   0 0 1 1
   0 0 0 1
-  include T-building-turret.scn
+  include T-building.scn
 end
 
 begin
@@ -27,7 +27,7 @@ begin
   0 1 0 20
   0 0 1 1
   0 0 0 1
-  include T-building-turret.scn
+  include T-building.scn
 end
 
 begin
@@ -37,4 +37,14 @@ begin
   0 0 1 1
   0 0 0 1
   include N-building.scn
+end
+
+begin
+-1
+.1 0 0 0
+0 .1 0 20
+0 0 .1 12
+0 0 0 1
+enemy 0 -1 turret.off
+-.1 -.1 0
 end

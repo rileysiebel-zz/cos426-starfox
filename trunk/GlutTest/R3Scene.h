@@ -6,7 +6,6 @@
 
 struct SFEnemy;
 struct SFProjectile;
-enum {FIXED = 1};
 
 // Constant definitions
 
@@ -214,7 +213,7 @@ public:
     SFEnemy(void);
     SFEnemy(const SFEnemy& enemy);
     SFEnemy(int fix);
-    SFEnemy(int fix, R3Mesh& mesh);
+    SFEnemy(int fix, R3Mesh& mesh, R3Vector& initialVelocity);
     
     //  void Update(void);  //handled in gluttest.cpp
     
