@@ -23,11 +23,18 @@
    static struct sockaddr_in si_me, si_other;
    static int sock;
    static socklen_t slen=sizeof(si_other);
-   static char buf[BUFLEN];
    static bool two_player = false;
-
-
-
+	
+	   struct info_to_send
+   {
+      double xp;
+      double yp;
+      double zp;
+      double health;
+   };
+   
+	static struct info_to_send net_info;
+	//static struct info_to_send my_info;
 
 // Display Variables
 // use these, throw the stuff below away
@@ -46,6 +53,8 @@
 
 // this is Arwing
    R3Mesh *ship;
+   R3Node *other_ship;
+	R3Matrix trans;
    double shipTipX,shipTipY,shipTipZ;
 
 // texture variables
@@ -95,7 +104,7 @@
    double rotationStep = 0.01;
 
 // speed varibales
-   double cameraSpeed = 0.05;
+   double cameraSpeed = 0.01;
    double shipSpeed = 0.05;
 
 // mutilple views
@@ -392,7 +401,7 @@
     // Push transformation onto stack
       glPushMatrix();
       LoadMatrix(&node->transformation);
-      //Update the transformation
+    //Update the transformation
       transformation *= node->transformation;	
     
     //This shows how you would get the *proper* coordinates. 
@@ -405,6 +414,7 @@
       {
          R3Point t = transformation * node->shape->mesh->Center();
          ship_pos = t;
+         trans = transformation;
          DrawShape(node->shape);
       }
       R3Point box_center = transformation * node->bbox.Centroid();
@@ -682,21 +692,13 @@
     //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
     
-    //Nader
-    //Receive data from companion
-      if (two_player)
-      {
-         if (recvfrom(sock, buf, BUFLEN, 0, (struct sockaddr*)&si_other, &slen)==-1)
-            diep("recvfrom()");
-         printf("Received packet from %s:%d\nData: %s\n\n", 
-                 inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), buf);
-      }
+
     // Awais
     // move camera and the ship forward
-      if (deltaMoveX || deltaMoveZ)
-         computePos(deltaMoveX, deltaMoveZ);
+      //if (deltaMoveX || deltaMoveZ)
+         //computePos(deltaMoveX, deltaMoveZ);
     
-      moveForward();
+      //moveForward();
       updateShip();
     //Reset the intersection
     
@@ -776,6 +778,20 @@
     
    // Write The altitude
       writeAltitude();
+    
+    	    //Nader
+    //Receive data from companion
+      if (two_player)
+      {
+         if (recvfrom(sock, &net_info, sizeof(info_to_send), 0, 
+         				(struct sockaddr*)&si_other, &slen)==-1)
+         diep("recvfrom()");
+         //printf("Received packet from %s:%d\nData: %s\n\n", 
+            //     inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), buf);
+         //cout <<  net_info.xp <<" " <<  net_info.yp << " " <<  net_info.zp << endl;
+      	R3Vector vec = R3Vector(net_info.xp, net_info.yp, -net_info.zp);
+         other_ship->transformation.Translate(vec);
+      }
     
       glutSwapBuffers();
     
@@ -1363,6 +1379,25 @@
       shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
       shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
       shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
+    
+    
+    	DrawScene(scene);   
+   	
+      other_ship = new R3Node();
+      other_ship->shape = new R3Shape();
+      other_ship->shape->type = R3_MESH_SHAPE;
+      other_ship->shape->mesh = new R3Mesh(*ship);
+    	other_ship->children = vector<R3Node*>();  
+   	other_ship->parent = scene->Root()->children[0];
+   	trans.Translate(R3Vector(0,2,0));
+   	other_ship->transformation = trans;
+   	trans.Translate(R3Vector(0,-2,0));
+   	other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
+   	other_ship->material = NULL;
+   	other_ship->enemy = new SFEnemy();
+   	
+   	scene->Root()->children.push_back(other_ship);
+
     
     // Return scene
       return scene;
