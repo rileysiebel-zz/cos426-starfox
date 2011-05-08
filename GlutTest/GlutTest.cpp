@@ -392,7 +392,7 @@
     // Push transformation onto stack
       glPushMatrix();
       LoadMatrix(&node->transformation);
-    //Update the transformation
+      //Update the transformation
       transformation *= node->transformation;	
     
     //This shows how you would get the *proper* coordinates. 
