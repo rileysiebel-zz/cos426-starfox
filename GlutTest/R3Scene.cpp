@@ -45,11 +45,12 @@ projectileSpeed(.1)
 //SFEnemy::SFEnemy(const SFEnemy& enemy);
 //SFEnemy::SFEnemy(int fix);
 
-SFEnemy::SFEnemy(int fix, R3Mesh& mesh)
+SFEnemy::SFEnemy(int fix, R3Mesh& mesh, R3Vector& initialVelocity)
 : fixed(fix),
 projectileLength(1),
 projectileSpeed(.1),
-projectileSource(mesh.Center())
+projectileSource(mesh.Center()),
+movementPath(initialVelocity)
 {
 }
 
@@ -429,6 +430,7 @@ Read(const char *filename, R3Node *node)
             node->parent = group_nodes[depth];
             arwingNode = node;
         }
+        /* unneeded
         //turret - basically a box that shoots
         else if (!strcmp(cmd, "turret")) {
             // Read data
@@ -487,14 +489,16 @@ Read(const char *filename, R3Node *node)
             group_nodes[depth]->bbox.Union(node->bbox);
             group_nodes[depth]->children.push_back(node);
             node->parent = group_nodes[depth];
-        }
+        } */
         //enemy - a mesh that moves and shoots
         else if (!strcmp(cmd, "enemy")) {
             // Read data
+            int fixed;
             int m;
+            float vx, vy, vz;
             char meshname[256];
-            if (fscanf(fp, "%d%s", &m, meshname) != 2) {
-                fprintf(stderr, "Unable to parse mesh command %d in file %s\n", command_number, filename);
+            if (fscanf(fp, "%d%d%s%f%f%f", &fixed, &m, meshname, &vx, &vy, &vz) != 6) {
+                fprintf(stderr, "Unable to parse enemy command %d in file %s\n", command_number, filename);
                 return 0;
             }
             
@@ -517,6 +521,9 @@ Read(const char *filename, R3Node *node)
             if (bufferp) *(bufferp+1) = '\0';
             else buffer[0] = '\0';
             strcat(buffer, meshname);
+            
+            
+            R3Vector *initialVelocity = new R3Vector(vx, vy, vz);
             
             // Create mesh
             R3Mesh *mesh = new R3Mesh();
@@ -544,10 +551,11 @@ Read(const char *filename, R3Node *node)
             // Create shape node
             R3Node *node = new R3Node();
             node->transformation = R3identity_matrix;
+            node->cumulativeTransformation = R3identity_matrix;
             node->material = material;
             node->shape = shape;
             node->bbox = mesh->bbox;
-            node->enemy = new SFEnemy(!FIXED, *mesh);
+            node->enemy = new SFEnemy(fixed, *mesh, *initialVelocity);
             
             node->enemy->position = shape->mesh->Center();
             node->enemy->projectileSource = shape->mesh->Center();
