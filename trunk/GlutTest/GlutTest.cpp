@@ -104,7 +104,7 @@
    double rotationStep = 0.01;
 
 // speed varibales
-   double cameraSpeed = 0.01;
+   double cameraSpeed = 0.05;
    double shipSpeed = 0.05;
 
 // mutilple views
@@ -695,10 +695,10 @@
 
     // Awais
     // move camera and the ship forward
-      //if (deltaMoveX || deltaMoveZ)
-         //computePos(deltaMoveX, deltaMoveZ);
+      if (deltaMoveX || deltaMoveZ)
+         computePos(deltaMoveX, deltaMoveZ);
     
-      //moveForward();
+      moveForward();
       updateShip();
     //Reset the intersection
     
@@ -1381,6 +1381,8 @@
       shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
     
     
+	 	if (two_player)
+		{
     	DrawScene(scene);   
    	
       other_ship = new R3Node();
@@ -1397,7 +1399,7 @@
    	other_ship->enemy = new SFEnemy();
    	
    	scene->Root()->children.push_back(other_ship);
-
+		}
     
     // Return scene
       return scene;
