@@ -8,24 +8,32 @@ using namespace std;
 static char *input_scene_name = "../art/level1.scn";
 
 //Network things..
-//#include <stdlib.h>
-//#include <arpa/inet.h>
-//#include <netinet/in.h>
-//#include <stdio.h>
-//#include <sys/types.h>
-//#include <sys/socket.h>
-//#include <unistd.h>
-
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <sys/select.h>    
+	 
 #define BUFLEN 512
 #define NPACK 10
-#define PORT 9930
+#define SRV_PORT 9930
+#define CLI_PORT 9999
+#define SRV_IP "140.180.29.64"
+#define CLI_IP "140.180.29.64"
+		
+   pthread_t thr;
 		
    static struct sockaddr_in si_me, si_other;
-   static int sock;
+   static int sock_in, sock_out;
 //   static socklen_t slen=sizeof(si_other);
    static bool two_player = false;
+   static bool is_server = false;
+   static bool is_client = false;
 	
-	   struct info_to_send
+   struct info_to_send
    {
       double xp;
       double yp;
@@ -33,8 +41,8 @@ static char *input_scene_name = "../art/level1.scn";
       double health;
    };
    
-	static struct info_to_send net_info;
-	//static struct info_to_send my_info;
+   static struct info_to_send net_info;
+   static struct info_to_send my_info;
 
 
 // Display Variables
@@ -56,7 +64,7 @@ double cull_behind_cutoff = 5;
 // this is Arwing
    R3Mesh *ship;
    R3Node *other_ship;
-	R3Matrix trans;
+   R3Matrix trans;
    double shipTipX,shipTipY,shipTipZ;
 
 // texture variables
@@ -106,8 +114,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed varibales
-   double cameraSpeed = 0.2;
-   double shipSpeed = 0.2;
+   double cameraSpeed = 0.00;
+   double shipSpeed = 0.05;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -690,14 +698,27 @@ void GLUTResize(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void GLUTRedraw(void) {
-    //fprintf(stderr, "%f\n", ship_pos.Z());
-    //fprintf(stderr, "Y\n%f\n%f\n", ship->Center().Y(), ship_pos.Y());
-    //fprintf(stderr, "Z\n%f\n%f\n", ship->Center().Z(), ship_pos.Z());
+   static void* receive_data(void *threadid)
+   {
+      while(1)
+      {
+      	//cout <<"receiving" << endl;
+         if (recvfrom(sock_in, &net_info, sizeof(info_to_send), 0, 
+            			(struct sockaddr*)&si_other, &slen)==-1)
+            diep("recvfrom()");
+      }
+      pthread_exit(NULL);
+   }
+
+   void GLUTRedraw(void) {
+   //fprintf(stderr, "%f\n", ship_pos.Z());
+   //fprintf(stderr, "Y\n%f\n%f\n", ship->Center().Y(), ship_pos.Y());
+   //fprintf(stderr, "Z\n%f\n%f\n", ship->Center().Z(), ship_pos.Z());
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
     //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
     
+      R3Point old_ship_pos = ship_pos;
     // Awais
     // move camera and the ship forward
       if (deltaMoveX || deltaMoveZ)
@@ -787,20 +808,54 @@ void GLUTRedraw(void) {
     
     	    //Nader
     //Receive data from companion
-      //if (two_player)
-      //{
-      //   if (recvfrom(sock, &net_info, sizeof(info_to_send), 0, 
-      //   				(struct sockaddr*)&si_other, &slen)==-1)
-      //   diep("recvfrom()");
-      //   //printf("Received packet from %s:%d\nData: %s\n\n", 
-      //      //     inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), buf);
-      //   //cout <<  net_info.xp <<" " <<  net_info.yp << " " <<  net_info.zp << endl;
-      //	R3Vector vec = R3Vector(net_info.xp, net_info.yp, -net_info.zp);
-      //   other_ship->transformation.Translate(vec);
-      //}
-    
+      if (two_player)
+      {
+         if (is_server)//checked
+         {
+         	//cout << "here" << endl;
+         	
+            if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
+            (struct sockaddr*)&si_other, slen)==-1)
+               diep("sendto()"); 
+         	
+         	my_info.xp = (-old_ship_pos.X() + ship_pos.X());
+            my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
+            my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
+            
+         	//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
+         	 R3Vector vec = R3Vector(net_info.yp
+            				,net_info.xp
+         						, net_info.zp
+         						);
+            other_ship->transformation.Translate(vec);
+            net_info.xp = 0;
+         	net_info.yp = 0;
+         	net_info.zp = 0;
+         }
+         if (is_client)//checked
+         {
+               if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
+               (struct sockaddr*)&si_other, slen)==-1)
+                  diep("sendto()");
+            
+            
+            my_info.xp = (ship_pos.X()-old_ship_pos.X());
+            my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
+            my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
+            
+         	         	
+            //cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
+         	R3Vector vec = R3Vector(net_info.xp
+            				,net_info.yp
+         						, net_info.zp
+         						);
+            other_ship->transformation.Translate(vec);
+            net_info.xp = 0;
+         	net_info.yp = 0;
+         	net_info.zp = 0;
+         }
+      }
       glutSwapBuffers();
-    
 }
 
 // Awais
@@ -1308,26 +1363,81 @@ void arwingShoot(void)
     rightNode->bbox = right->segment.BBox();
     
     //Note: specifically choosing NOT to merge bboxes with the arwing
-    scene->arwingNode->children.push_back(leftNode);
-    scene->arwingNode->children.push_back(rightNode);
-    leftNode->parent = scene->arwingNode;
-    rightNode->parent = scene->arwingNode;
-}
-
-static void set_up_socket()
-{
-    if ((sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
-        diep("socket");
-    
-    memset((char *) &si_me, 0, sizeof(si_me));
-    si_me.sin_family = AF_INET;
-    si_me.sin_port = htons(PORT);
-    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-    cout << "before bind" << endl;
-    if (bind(sock, (struct sockaddr*)&si_me, sizeof(si_me))==-1)
-        diep("bind");
-    
-}
+      scene->arwingNode->children.push_back(leftNode);
+      scene->arwingNode->children.push_back(rightNode);
+      leftNode->parent = scene->arwingNode;
+      rightNode->parent = scene->arwingNode;
+   }
+   
+   static void set_up_socket()
+   {
+      if (is_server) //checked
+      {
+         if ((sock_in=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+            diep("socket");
+      
+         memset((char *) &si_me, 0, sizeof(si_me));
+         si_me.sin_family = AF_INET;
+         si_me.sin_port = htons(SRV_PORT);
+         si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+         //cout << "before bind" << endl;
+         if (bind(sock_in, (struct sockaddr*)&si_me, sizeof(si_me))==-1)
+            diep("bind");
+         
+      
+         if ((sock_out=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+            diep("socket");
+      
+         bzero(&si_other, sizeof(si_other));
+      //memset((char *) &si_other, 0, sizeof(si_other));
+         si_other.sin_family = AF_INET;
+         si_other.sin_port = htons(CLI_PORT);
+         if (inet_aton(CLI_IP, &si_other.sin_addr)==0) 
+         {
+            fprintf(stderr, "inet_aton() failed\n");
+            exit(1);
+         }
+      }
+   	
+      if (is_client) //checked
+      {
+         if ((sock_out=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+            diep("socket");
+      
+         bzero(&si_other, sizeof(si_other));
+      //memset((char *) &si_other, 0, sizeof(si_other));
+         si_other.sin_family = AF_INET;
+         si_other.sin_port = htons(SRV_PORT);
+         if (inet_aton(SRV_IP, &si_other.sin_addr)==0) 
+         {
+            fprintf(stderr, "inet_aton() failed\n");
+            exit(1);
+         }
+      
+      
+         if ((sock_in=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+            diep("socket");
+      
+         memset((char *) &si_me, 0, sizeof(si_me));
+         si_me.sin_family = AF_INET;
+         si_me.sin_port = htons(CLI_PORT);
+         si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+         //cout << "before bind" << endl;
+         if (bind(sock_in, (struct sockaddr*)&si_me, sizeof(si_me))==-1)
+            diep("bind");
+      
+      }
+   
+   	if (two_player)
+   	{
+      int rc = pthread_create(&thr, NULL, receive_data, NULL);
+      if (rc)
+      {
+         printf("ERROR; return code from pthread_create() is %d\n", rc);
+         exit(-1);
+      }
+      }
+   }
 
 
 // Riley added this, just took some stuff out of main
@@ -1340,11 +1450,14 @@ void GLUTInit(int *argc, char **argv) {
     glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
     glutCreateWindow("StarFox");
     
-    if (*argc > 1)
-   	{
-   		if (strcmp(argv[1], "-n") == 0)
-   			two_player = true;
-   	}
+      if (*argc == 2)
+      {	
+         two_player = true;
+         if (strcmp(argv[1], "-s") == 0)
+            is_server = true;
+         if (strcmp(argv[1], "-c") == 0)
+            is_client = true;
+      }
     
     // register callbacks
     glutDisplayFunc(GLUTRedraw);
@@ -1416,31 +1529,66 @@ ReadScene(const char *filename) {
     ly = camera.towards.Y();
     lz = camera.towards.Z();
     // get the ship
-    ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
-    shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
-    shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
-    shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
     
+      ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
     
-	 	if (two_player)
-		{
-    	DrawScene(scene);   
-   	
-      other_ship = new R3Node();
-      other_ship->shape = new R3Shape();
-      other_ship->shape->type = R3_MESH_SHAPE;
-      other_ship->shape->mesh = new R3Mesh(*ship);
-    	other_ship->children = vector<R3Node*>();  
-   	other_ship->parent = scene->Root()->children[0];
-   	trans.Translate(R3Vector(0,2,0));
-   	other_ship->transformation = trans;
-   	trans.Translate(R3Vector(0,-2,0));
-   	other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
-   	other_ship->material = NULL;
-   	other_ship->enemy = new SFEnemy();
-   	
-   	scene->Root()->children.push_back(other_ship);
-		}
+      if (two_player)
+      {
+         if (is_server) //checked
+         {
+            ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
+            DrawScene(scene);   
+         
+            other_ship = new R3Node();
+            other_ship->shape = new R3Shape();
+            other_ship->shape->type = R3_MESH_SHAPE;
+            other_ship->shape->mesh = new R3Mesh(*ship);
+            other_ship->children = vector<R3Node*>();  
+            other_ship->parent = scene->Root()->children[0];
+            trans.Translate(R3Vector(0,2,0));
+            other_ship->transformation = trans;
+            trans.Translate(R3Vector(0,2,0));
+            other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
+            other_ship->material = NULL;
+            other_ship->enemy = new SFEnemy();
+         
+            scene->Root()->children.push_back(other_ship);
+         }
+         if (is_client) //checked
+         {
+            ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
+            DrawScene(scene);   
+         
+            other_ship = new R3Node();
+            other_ship->shape = new R3Shape();
+            other_ship->shape->type = R3_MESH_SHAPE;
+            other_ship->shape->mesh = new R3Mesh(*ship);
+            other_ship->children = vector<R3Node*>();  
+            other_ship->parent = scene->Root()->children[0];
+            other_ship->transformation = trans;
+            scene->Root()->children[0]->children[0]->transformation.Translate(R3Vector(0,2,0));
+            trans = scene->Root()->children[0]->children[0]->transformation;
+            other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
+            other_ship->material = NULL;
+            other_ship->enemy = new SFEnemy();
+         
+            scene->Root()->children.push_back(other_ship);
+         }
+         
+      	net_info.xp = 0;
+      	net_info.yp = 0;
+      	net_info.zp = 0;
+      	
+      	my_info.xp = 0;
+      	my_info.yp = 0;
+        	my_info.zp = 0;
+      	
+      }
+      
+      shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
+      shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
+      shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
+   
     
     // Return scene
     return scene;
