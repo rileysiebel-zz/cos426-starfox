@@ -8,13 +8,13 @@ using namespace std;
 static char *input_scene_name = "../art/level1.scn";
 
 //Network things..
-#include <stdlib.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
+//#include <stdlib.h>
+//#include <arpa/inet.h>
+//#include <netinet/in.h>
+//#include <stdio.h>
+//#include <sys/types.h>
+//#include <sys/socket.h>
+//#include <unistd.h>
 
 #define BUFLEN 512
 #define NPACK 10
@@ -22,7 +22,7 @@ static char *input_scene_name = "../art/level1.scn";
 		
    static struct sockaddr_in si_me, si_other;
    static int sock;
-   static socklen_t slen=sizeof(si_other);
+//   static socklen_t slen=sizeof(si_other);
    static bool two_player = false;
 	
 	   struct info_to_send
@@ -48,7 +48,7 @@ static int GLUTwindow_width = 800;
 
 // START: Varaibles by Awais
 
-double epsilon = 10e-5;
+double epsilon = 0.005;
 double collision_epsilon = .1;
 double cull_depth = 100;
 double cull_behind_cutoff = 5;
@@ -106,12 +106,16 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed varibales
-   double cameraSpeed = 0.05;
-   double shipSpeed = 0.05;
+   double cameraSpeed = 0.2;
+   double shipSpeed = 0.2;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
 enum view currView = OUTSIDE;
+
+// Health
+   double health = 100;
+
 // END: Variables by Awais
 
 
@@ -694,7 +698,6 @@ void GLUTRedraw(void) {
     //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
     
-
     // Awais
     // move camera and the ship forward
       if (deltaMoveX || deltaMoveZ)
@@ -780,20 +783,21 @@ void GLUTRedraw(void) {
     
     // Write The altitude
     writeAltitude();
+	  writeHealth();
     
     	    //Nader
     //Receive data from companion
-      if (two_player)
-      {
-         if (recvfrom(sock, &net_info, sizeof(info_to_send), 0, 
-         				(struct sockaddr*)&si_other, &slen)==-1)
-         diep("recvfrom()");
-         //printf("Received packet from %s:%d\nData: %s\n\n", 
-            //     inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), buf);
-         //cout <<  net_info.xp <<" " <<  net_info.yp << " " <<  net_info.zp << endl;
-      	R3Vector vec = R3Vector(net_info.xp, net_info.yp, -net_info.zp);
-         other_ship->transformation.Translate(vec);
-      }
+      //if (two_player)
+      //{
+      //   if (recvfrom(sock, &net_info, sizeof(info_to_send), 0, 
+      //   				(struct sockaddr*)&si_other, &slen)==-1)
+      //   diep("recvfrom()");
+      //   //printf("Received packet from %s:%d\nData: %s\n\n", 
+      //      //     inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), buf);
+      //   //cout <<  net_info.xp <<" " <<  net_info.yp << " " <<  net_info.zp << endl;
+      //	R3Vector vec = R3Vector(net_info.xp, net_info.yp, -net_info.zp);
+      //   other_ship->transformation.Translate(vec);
+      //}
     
       glutSwapBuffers();
     
@@ -1134,6 +1138,23 @@ void writeAltitude(void) {
     restorePerspectiveProjection();
 }
 
+// Awais
+// display health
+void writeHealth(void) {
+	setOrthographicProjection();
+	glPushMatrix();
+	glLoadIdentity();
+	char number1[256];
+	sprintf(number1,"%.0f",health);
+	char *quant1 = "Health: ";
+	char *unit1 = "%";
+	char *result1 = new char[strlen(quant1)+strlen(number1)+strlen(unit1)];
+	sprintf(result1,"%s%s%s",quant1,number1,unit1);
+	renderBitmapString(10,40,GLUT_BITMAP_HELVETICA_18,result1);
+	glPopMatrix();
+	restorePerspectiveProjection();
+}
+
 //Kevin
 //have enemies move, shoot
 void updateEnemies(void)
@@ -1342,7 +1363,7 @@ void GLUTInit(int *argc, char **argv) {
     glEnable(GL_DEPTH_TEST);
     
    	//Set up a listening socket
-    set_up_socket();
+    //  set_up_socket();
    	
    	
    	

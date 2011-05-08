@@ -40,6 +40,7 @@ void renderBitmapString(double x, double y, void *font, char *string);
 void setOrthographicProjection(void);
 void restorePerspectiveProjection(void);
 void writeAltitude(void);
+void writeHealth(void);
 
 //enemy and projectile functions
 void updateEnemies(void);
