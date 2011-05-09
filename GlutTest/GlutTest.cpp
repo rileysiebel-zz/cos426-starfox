@@ -1,13 +1,15 @@
 #include "GlutTest.h"
 #include "R3/R3.h"
 #include "R3Scene.h"
+#include "smoke.h"
+#include "imageloader.h"
 //#include "raytrace.h"
 
 using namespace std;
 
 // Arguments
 static const char *input_scene_name = "../art/level1.scn";
-
+#if defined(__APPLE__)
 //Network things..
 #include <stdlib.h>
 #include <arpa/inet.h>
@@ -45,6 +47,7 @@ struct info_to_send
 
 static struct info_to_send net_info;
 static struct info_to_send my_info;
+#endif
 
 struct ProjectileInter 
 {
@@ -64,7 +67,7 @@ static int GLUTwindow_width = 800;
 
 // START: Varaibles by Awais
 
-double epsilon = 10e-5;
+double epsilon = 0.005;
 double collision_epsilon = .1;
 double cull_depth = 100;
 double cull_behind_cutoff = 5;
@@ -132,6 +135,11 @@ enum view currView = OUTSIDE;
 
 // Health
 double health = 100;
+
+// Smoke variables
+const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
+ParticleEngine* smokeParticles;
+GLuint smokeTexture;
 
 // END: Variables by Awais
 
@@ -707,6 +715,7 @@ void GLUTResize(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
+#if defined(__APPLE__)
 static void* receive_data(void *threadid)
 {
     while(1)
@@ -718,6 +727,7 @@ static void* receive_data(void *threadid)
     }
     pthread_exit(NULL);
 }
+#endif
 
 void GLUTRedraw(void) {
     //fprintf(stderr, "%f\n", ship_pos.Z());
@@ -811,9 +821,11 @@ void GLUTRedraw(void) {
     DrawScene(scene);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-    // Write The altitude
+
+	// Write The altitude
     writeAltitude();
     
+	#if defined(__APPLE__)
     //Nader
     //Receive data from companion
     if (two_player)
@@ -863,6 +875,16 @@ void GLUTRedraw(void) {
          	net_info.zp = 0;
         }
     }
+	#endif
+	    
+	// added for smoke
+	//glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+    // draw smoke
+	drawParticles(smokeParticles,0,10,20,2,2,2);
+	
     glutSwapBuffers();
 }
 
@@ -889,8 +911,10 @@ GLuint loadTexture(Image* image) {
 // add any normal keyboard keys over here. Normal Keys are defined on glut pages
 void GLUTKeyboard(unsigned char key, int xx, int yy) {
     // escape
-    if (key == 27)
+    if (key == 27) {
         exit(0);
+		delete smokeParticles;
+	}
     // spacebar
     else if (key == 32)
         arwingShoot();
@@ -1218,6 +1242,13 @@ void writeHealth(void) {
 	restorePerspectiveProjection();
 }
 
+// Awais
+void updateParticle(int value) {
+	// 4
+	smokeParticles->advance(TIMER_MS / 1000.0f);
+	glutTimerFunc(TIMER_MS, updateParticle, 0);
+}
+
 //Kevin
 //have enemies move, shoot
 void updateEnemies(void)
@@ -1488,6 +1519,7 @@ void arwingShoot(void)
     rightNode->parent = scene->arwingNode;
 }
 
+#if defined(__APPLE__)
 static void set_up_socket()
 {
     if (is_server) //checked
@@ -1557,7 +1589,7 @@ static void set_up_socket()
         }
     }
 }
-
+#endif
 
 // Riley added this, just took some stuff out of main
 // for organizational purposes
@@ -1569,6 +1601,7 @@ void GLUTInit(int *argc, char **argv) {
     glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
     glutCreateWindow("StarFox");
     
+	#if defined(__APPLE__)
     if (*argc == 2)
     {	
         two_player = true;
@@ -1577,7 +1610,8 @@ void GLUTInit(int *argc, char **argv) {
         if (strcmp(argv[1], "-c") == 0)
             is_client = true;
     }
-    
+	#endif
+
     // register callbacks
     glutDisplayFunc(GLUTRedraw);
     glutReshapeFunc(GLUTResize);
@@ -1592,21 +1626,19 @@ void GLUTInit(int *argc, char **argv) {
     glutSpecialUpFunc(releaseKey);
     
     // OpenGL init
-    glEnable(GL_DEPTH_TEST);
-    
+    glEnable(GL_DEPTH_TEST); 
+
+	#if defined(__APPLE__)
    	//Set up a listening socket
     set_up_socket();
+	#endif
    	
-   	
-   	
-    // texturing
-    /*	Image* image = loadBMP("images\\brick.bmp");
-     texBrick = loadTexture(image);
-     delete image;
-     
-     image = loadBMP("images\\stone.bmp");
-     texStone = loadTexture(image);
-     delete image; */
+   	// smoke texturing
+	Image* image = loadBMP("images/circle.bmp");
+	Image* alphaChannel = loadBMP("images/circlealpha.bmp");
+	smokeTexture = loadAlphaTexture(image, alphaChannel);
+	delete image;
+	delete alphaChannel;
     
     glEnable(GL_TEXTURE_2D);
 }
@@ -1650,7 +1682,8 @@ ReadScene(const char *filename) {
     // get the ship
     
     ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
-    
+
+	#if defined(__APPLE__)
     if (two_player)
     {
         if (is_server) //checked
@@ -1703,7 +1736,8 @@ ReadScene(const char *filename) {
         my_info.zp = 0;
       	
     }
-    
+	#endif
+
     shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
     shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
     shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
@@ -1836,6 +1870,11 @@ int main(int argc, char **argv) {
     scene = ReadScene(input_scene_name);
     if(!scene) exit(-1);
     
+	// smoke
+	smokeParticles = new ParticleEngine(smokeTexture);
+	glutTimerFunc(TIMER_MS, updateParticle, 0);
+
+
     GLUTMainLoop();
     
     return 0;
