@@ -129,12 +129,15 @@ GLuint loadAlphaTexture(Image* image, Image* alphaChannel) {
 }
 
 // draw the particles system
-void drawParticles(ParticleEngine* input, double tx, double ty, double tz, double sx, double sy, double sz) {
+void drawParticles(ParticleEngine* input, double tx, double ty, double tz, double sx, double sy, double sz, R3Point *shipPos, double cullFront, double cullBack) {
 
-	glPushMatrix();
-	glTranslatef(tx, ty, tz);
-	glScalef(sx, sy, sz);
-	glRotatef(90,1,0,0);
-	input->draw();
-	glPopMatrix();
+	double diff = ty - shipPos->Y();
+	if ((diff < cullFront) && (diff > -cullBack)) {
+		glPushMatrix();
+		glTranslatef(tx, ty, tz);
+		glScalef(sx, sy, sz);
+		glRotatef(90,1,0,0);
+		input->draw();
+		glPopMatrix();
+	}
 }

@@ -17,7 +17,7 @@
 
 #include "imageloader.h"
 #include "vec3f.h"
-//#include "R3/R3.h"
+#include "R3/R3.h"
 
 
 using namespace std;
@@ -138,4 +138,4 @@ char* addAlphaChannel(Image* image, Image* alphaChannel);
 //alpha channel and returns the id of the texture
 GLuint loadAlphaTexture(Image* image, Image* alphaChannel);
 // draw the particles system
-void drawParticles(ParticleEngine* input, double tx, double ty, double tz, double sx, double sy, double sz);
+void drawParticles(ParticleEngine* input, double tx, double ty, double tz, double sx, double sy, double sz, R3Point *shipPos, double cullFront, double cullBack);
