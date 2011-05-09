@@ -47,10 +47,10 @@ projectileSpeed(.1)
 
 SFEnemy::SFEnemy(int fix, R3Mesh& mesh, R3Vector& initialVelocity)
 : fixed(fix),
+movementPath(initialVelocity),
 projectileLength(1),
 projectileSpeed(.1),
-projectileSource(mesh.Center()),
-movementPath(initialVelocity)
+projectileSource(mesh.Center())
 {
 }
 
@@ -58,8 +58,9 @@ SFProjectile::SFProjectile(void)
 {
 }
 
-SFProjectile::SFProjectile(double spd)
-: speed(spd)
+SFProjectile::SFProjectile(double spd, R3Node *pNode)
+: speed(spd),
+parentNode(pNode)
 {
 }
 

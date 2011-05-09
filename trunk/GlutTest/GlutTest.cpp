@@ -1,11 +1,12 @@
 #include "GlutTest.h"
 #include "R3/R3.h"
 #include "R3Scene.h"
+//#include "raytrace.h"
 
 using namespace std;
 
 // Arguments
-static char *input_scene_name = "../art/level1.scn";
+static const char *input_scene_name = "../art/level1.scn";
 
 //Network things..
 #include <stdlib.h>
@@ -16,6 +17,7 @@ static char *input_scene_name = "../art/level1.scn";
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/select.h>    
+#include <float.h>
 
 #define BUFLEN 512
 #define NPACK 10
@@ -121,8 +123,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.05;
-double shipSpeed = 0.05;
+double cameraSpeed = 0.01;
+double shipSpeed = 0.01;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -1236,13 +1238,14 @@ void updateEnemies(void)
         //shoot (will change to a static rate in the future)
         if ((int)GetTime() % 4 == 0 && (int)RandomNumber() % 4 == 0)
         {
-            SFProjectile *proj = new SFProjectile(.1);
+            SFProjectile *proj = new SFProjectile(.1, enemy->node);
             R3Point arwingPos = ship_pos + shipSpeed * y;//ship->Center();
             R3Point enemyPos = enemy->position;//enemy->projectileSource;
+            proj->parentNode = enemy->node;
             
             enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
             
-            //      printf("arwing pos %f:%f:%f\n", arwingPos.X(), arwingPos.Y(), arwingPos.Z());
+        //    printf("arwing pos %f:%f:%f\n", ship_pos.X(), ship_pos.Y(), ship_pos.Z());
             
             //      printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
             
@@ -1255,7 +1258,9 @@ void updateEnemies(void)
             
             //    projDir *= 4;
             
-            proj->segment = *(new R3Segment(enemyPos, projDir));
+            proj->segment = *(new R3Segment(enemyPos, enemyPos + projDir));
+            
+         //   printf("new proj from %f %f %f   to %f %f %f \n",proj->segment.Start().X(),proj->segment.Start().Y(),proj->segment.Start().Z(),proj->segment.End().X(),proj->segment.End().Y(),proj->segment.End().Z());
             
             scene->projectiles.push_back(proj);
             
@@ -1300,15 +1305,29 @@ void updateProjectiles(void)
         }
         else
         {
+         /*   printf("proj->parentNode  %d\n", proj->parentNode);
+            
+            printf("scene root %d\n", scene->root);
+            
+            printf("arwing %d\n", scene->arwingNode); 
+           */ 
             //calcluate for intersection with object on next move
+            ProjectileInter inter = projIntersect(scene->root, proj);
             
-            //move
-            //    printf("projectile endpoint %f:%f:%f\n", proj->segment.End().X(), proj->segment.End().Y(), proj->segment.End().Z());
-            
-            proj->segment.Reset(proj->segment.Start() + proj->speed * proj->segment.Vector(), 
-                                proj->segment.End() + proj->speed * proj->segment.Vector());
-            
-            //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
+            if (inter.hit)
+            {
+                printf("hit something\n");
+            }
+            else
+            {
+                //move
+                //    printf("projectile endpoint %f:%f:%f\n", proj->segment.End().X(), proj->segment.End().Y(), proj->segment.End().Z());
+                
+                proj->segment.Reset(proj->segment.Start() + proj->speed * proj->segment.Vector(), 
+                                    proj->segment.End() + proj->speed * proj->segment.Vector());
+                
+                //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
+            }
         }
         sort (scene->projectiles.begin(), scene->projectiles.end());
         for (int i = deletionIndices.size() - 1; i >= 0; i--)
@@ -1321,7 +1340,93 @@ void updateProjectiles(void)
 
 ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
 {
+  /*  R3Point p = proj->segment.End();
+    R3Point m = proj->segment.Midpoint();
+    R3Intersection closest;
+    R3Intersection inter;
     
+    closest.hit = 0;
+    closest.t = DBL_MAX;
+    
+    for (int i = 0; i < scene->NEnemies(); i++)
+    {
+        SFEnemy *enemy = scene->Enemy(i);
+        R3Box box = enemy->node->bbox;
+        
+        box.Draw();
+        
+            inter = RayMesh(scene, (R3Ray *)&proj->segment.Ray(), *enemy->node->shape->mesh);
+            
+            if (inter.hit 
+                //&& inter.node != proj->parentNode
+                //&& inter.t <= proj->segment.Length() 
+                )//&& inter.t < closest.t)
+            {
+                closest = inter;
+                printf("intered\n");
+            } 
+        
+         //    if (proj->parentNode != enemy->node)
+         {
+         if ((box.XMax() + epsilon >= p.X() && box.XMin() - epsilon <= p.X()) 
+         && (box.YMax() + epsilon >= p.Y() && box.YMin() - epsilon <= p.Y()) 
+         && (box.ZMax() + epsilon >= p.Z() && box.ZMin() - epsilon <= p.Z()))
+         {
+         inter.hit = 1;
+         inter.position = p;
+         inter.node = enemy->node;
+         printf("intersect with %d\n", node);
+         }
+         else if ((box.XMax() + epsilon >= m.X() && box.XMin() - epsilon <= m.X()) 
+         && (box.YMax() + epsilon >= m.Y() && box.YMin() - epsilon <= m.Y()) 
+         && (box.ZMax() + epsilon >= m.Z() && box.ZMin() - epsilon <= m.Z()))
+         {
+         inter.hit = 1;
+         inter.position = p;
+         inter.node = enemy->node;
+         printf("intersect with %d\n", node);
+         }
+         
+         } 
+        
+    }*/
+    
+    /* this version needs better checks on which nodes to ignore.
+     * the problem is that lasers are intersecting with various
+     * scene bboxes - basically where nothing actually is, but where
+     * it is contaiend within the scene */
+     R3Point p = proj->segment.End();
+     R3Box box = node->bbox;
+     ProjectileInter inter;
+    
+    inter.hit = 0;
+    
+    
+    
+    //later, add a check for non-null parent node (could have been
+    //destroyed
+   // if (node != proj->parentNode)// && (node->enemy != NULL || node == scene->arwingNode))
+    {
+        for (int i = 0; i < node->children.size(); i++)
+        {
+            inter = projIntersect(node->children[i], proj);
+        }
+        
+        if (node->enemy != NULL)// && node != scene->arwingNode)
+        {
+            if ((box.XMax() + epsilon >= p.X() && box.XMin() - epsilon <= p.X()) 
+                && (box.YMax() + epsilon >= p.Y() && box.YMin() - epsilon <= p.Y()) 
+                && (box.ZMax() + epsilon >= p.Z() && box.ZMin() - epsilon <= p.Z()))
+            {
+                inter.hit = 1;
+                inter.position = p;
+                inter.node = node;
+                printf("intersect with %d\n", node);
+            }
+        }
+    } 
+    
+    return inter; 
 }
 
 void arwingShoot(void)
@@ -1329,8 +1434,11 @@ void arwingShoot(void)
     R3Vector toLeftWing = *(new R3Vector(-1.5,-.5,-.5));
     R3Vector toRightWing = *(new R3Vector(1.5,-.5,-.5));
     
-    SFProjectile *left = new SFProjectile(.3);
-    SFProjectile *right = new SFProjectile(.3);
+    SFProjectile *left = new SFProjectile(.3, scene->arwingNode);
+    SFProjectile *right = new SFProjectile(.3, scene->arwingNode);
+    
+    toLeftWing.Rotate(camera.towards, rotationAngle);
+    toRightWing.Rotate(camera.towards, rotationAngle);
     
     //Kevin - I would like to get these shooting in the ship towards
     //rather than the camera, but this will do
