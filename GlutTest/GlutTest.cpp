@@ -127,8 +127,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.01;
-double shipSpeed = 0.01;
+double cameraSpeed = 0.31;
+double shipSpeed = 0.31;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -284,7 +284,7 @@ void LoadCamera(R3Camera *camera)
     // Set projection transformation
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(2*180.0*camera->yfov/M_PI, (GLdouble) GLUTwindow_width /(GLdouble) GLUTwindow_height, 0.01, 10000);
+    gluPerspective(2*180.0*camera->yfov/M_PI, ((GLdouble) GLUTwindow_width) /((GLdouble) (GLUTwindow_height-200)), 0.01, 10000);
     
     // Set camera transformation
     glMatrixMode(GL_MODELVIEW);
@@ -299,7 +299,7 @@ void LoadCamera2(R3Camera *camera)
     // Set projection transformation
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(2*180.0*camera->yfov/M_PI, (GLdouble) GLUTwindow_width /(GLdouble) GLUTwindow_height, 0.01, 10000);
+    gluPerspective(2*180.0*camera->yfov/M_PI, ((GLdouble) GLUTwindow_width) /((GLdouble) 200), 0.01, 10000);
     
     // Set camera transformation
     glMatrixMode(GL_MODELVIEW);
@@ -730,7 +730,7 @@ void GLUTResize(int w, int h) {
     glLoadIdentity();
     
     // Set the viewport to be the entire window
-    glViewport(0, 0, w, h);
+    glViewport(0, 0, w, h-200);
     
     // Set the correct perspective.
     gluPerspective(45.0f, ratio, 0.1f, 100.0f);
@@ -932,7 +932,7 @@ void GLUTRedraw(void) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_DEPTH_TEST);
 		// draw smoke
-		//drawParticles(smokeParticles,0,10,20,2,2,2);
+		//drawParticles(smokeParticles,0,10,20,2,2,2,&ship_pos,cull_depth,5);
 	
 		glutSwapBuffers();
 		glFlush();
