@@ -33,6 +33,7 @@ void peakUp(void);
 void peakDown(void);
 void lookStraightLR(void);
 void lookStraightUD(void);
+void lookStraightRotate(void);
 void computeRotation(void);
 
 // display txt
