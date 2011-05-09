@@ -62,7 +62,7 @@ static R3Scene *scene = NULL;
 static R3Camera camera;
 
 // GLUT variables
-static int GLUTwindow_height = 800;
+static int GLUTwindow_height = 1000;
 static int GLUTwindow_width = 800;
 
 // START: Varaibles by Awais
@@ -70,7 +70,7 @@ static int GLUTwindow_width = 800;
 double epsilon = 0.02;
 double collision_epsilon = .1;
 double cull_depth = 100;
-double cull_behind_cutoff = 5;
+double cull_behind_cutoff = 50;
 
 // this is Arwing
 R3Mesh *ship;
@@ -127,8 +127,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.51;
-double shipSpeed = 0.51;
+double cameraSpeed = 0.01;
+double shipSpeed = 0.01;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -291,6 +291,21 @@ void LoadCamera(R3Camera *camera)
     glLoadIdentity();
     gluLookAt(x, y, z,
               x+lx, y+ly,  z+lz,
+              0, 0,  1); 
+}
+
+void LoadCamera2(R3Camera *camera)
+{
+    // Set projection transformation
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(2*180.0*camera->yfov/M_PI, (GLdouble) GLUTwindow_width /(GLdouble) GLUTwindow_height, 0.01, 10000);
+    
+    // Set camera transformation
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(x, y, z,
+              x+lx, y-ly,  z+lz,
               0, 0,  1); 
 }
 
@@ -704,6 +719,10 @@ void GLUTResize(int w, int h) {
         h = 1;
     float ratio =  w * 1.0 / h;
     
+	// for resizing
+	GLUTwindow_width = w;
+	GLUTwindow_height = h;
+
     // Use the Projection Matrix
     glMatrixMode(GL_PROJECTION);
     
@@ -741,160 +760,183 @@ void GLUTRedraw(void) {
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
     //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
-    
-    R3Point old_ship_pos = ship_pos;
-    // Awais
-    // move camera and the ship forward
-    if (deltaMoveX || deltaMoveZ)
-        computePos(deltaMoveX, deltaMoveZ);
-    
-    moveForward();
-    updateShip();
-    //Reset the intersection
-    
-    // left-right-up-down movement in viewplane
-    // angle movement in LR direction
-    if (!left_intersection && !right_intersection)
-    {
-        if (rightAngle)
-            peakRight();
-        if (leftAngle)
-            peakLeft();
-        if (!rightAngle && !leftAngle)
-            lookStraightLR();
-    }
-    // angle movement in UD direction
-    if (!top_intersection && !bottom_intersection)
-    {
-        if (upAngle)
-            peakUp();
-        if (downAngle)
-            peakDown();
-        if (!upAngle && !downAngle)
-            lookStraightUD();
-    }
-    if (rotationAngle) 
-        computeRotation();
-	if (!rightAngle && !leftAngle && !upAngle && !downAngle)
-		lookStraightRotate();
-
-
-    //Update enemies
-    updateEnemies();
-    //Update projectiles
-    updateProjectiles();
-    
-    // Initialize OpenGL drawing modes
-    glEnable(GL_LIGHTING);
-    glDisable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ZERO);
-    glDepthMask(true);
-    
-    // Clear window 
-    R3Rgb background = scene->background;
-    glClearColor(background[0], background[1], background[2], background[3]);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    // Load camera
-    LoadCamera(&camera);
-    
-    // Load scene lights
-    LoadLights(scene);
-    
-    // Draw scene camera
-    //DrawCamera(scene);
-    
-    // Draw scene lights
-    //DrawLights(scene);
-    
-    // Draw scene surfaces
-    glEnable(GL_LIGHTING);
-    
-    front_intersection = false;
-    back_intersection = false;
-    left_intersection = false;
-    right_intersection = false;
-    top_intersection = false;
-    bottom_intersection = false;
-    
-    DrawScene(scene);
-    
-    
-    DrawProjectiles(scene);
-    
-    // Draw scene edges
-    glDisable(GL_LIGHTING);
-    glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawScene(scene);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    
-
-	// Write The altitude and health
-    writeAltitude();
-    writeHealth();
-
-	#if defined(__APPLE__)
-    //Nader
-    //Receive data from companion
-    if (two_player)
-    {
-        if (is_server)//checked
-        {
-         	//cout << "here" << endl;
-         	
-            if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
-                       (struct sockaddr*)&si_other, slen)==-1)
-                diep("sendto()"); 
-         	
-         	my_info.xp = (-old_ship_pos.X() + ship_pos.X());
-            my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
-            my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
-            
-         	//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
-            R3Vector vec = R3Vector(net_info.yp
-                                    ,net_info.xp
-                                    , net_info.zp
-                                    );
-            other_ship->transformation.Translate(vec);
-            net_info.xp = 0;
-         	net_info.yp = 0;
-         	net_info.zp = 0;
-        }
-        if (is_client)//checked
-        {
-            if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
-                       (struct sockaddr*)&si_other, slen)==-1)
-                diep("sendto()");
-            
-            
-            my_info.xp = (ship_pos.X()-old_ship_pos.X());
-            my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
-            my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
-            
-            
-            //cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
-         	R3Vector vec = R3Vector(net_info.xp
-                                    ,net_info.yp
-                                    , net_info.zp
-                                    );
-            other_ship->transformation.Translate(vec);
-            net_info.xp = 0;
-         	net_info.yp = 0;
-         	net_info.zp = 0;
-        }
-    }
-	#endif
-	    
-	// added for smoke
-	//glEnable(GL_COLOR_MATERIAL);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
-    // draw smoke
-	//drawParticles(smokeParticles,0,10,20,2,2,2);
 	
-    glutSwapBuffers();
+	glEnable(GL_SCISSOR_TEST);
+	for (int i = 0; i < 2; i ++) {
+		if (i == 0) {
+			glViewport(0,0,GLUTwindow_width,GLUTwindow_height-200);
+			glScissor(0,0,GLUTwindow_width,GLUTwindow_height-200);
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+		}
+		if ( i == 1) {
+			glViewport(0,GLUTwindow_height-200,GLUTwindow_width,200);
+			glScissor(0,GLUTwindow_height-200,GLUTwindow_width,200);
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+		}
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		R3Point old_ship_pos = ship_pos;
+		// Awais
+		// move camera and the ship forward
+		if (deltaMoveX || deltaMoveZ)
+			computePos(deltaMoveX, deltaMoveZ);
+    
+		moveForward();
+		updateShip();
+		//Reset the intersection
+    
+		// left-right-up-down movement in viewplane
+		// angle movement in LR direction
+		if (!left_intersection && !right_intersection)
+		{
+			if (rightAngle)
+				peakRight();
+			if (leftAngle)
+				peakLeft();
+			if (!rightAngle && !leftAngle)
+				lookStraightLR();
+		}
+		// angle movement in UD direction
+		if (!top_intersection && !bottom_intersection)
+		{
+			if (upAngle)
+				peakUp();
+			if (downAngle)
+				peakDown();
+			if (!upAngle && !downAngle)
+				lookStraightUD();
+		}
+		if (rotationAngle) 
+			computeRotation();
+		if (!rightAngle && !leftAngle && !upAngle && !downAngle)
+			lookStraightRotate();
+
+
+		//Update enemies
+		updateEnemies();
+		//Update projectiles
+		updateProjectiles();
+    
+		// Initialize OpenGL drawing modes
+		glEnable(GL_LIGHTING);
+		glDisable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ZERO);
+		glDepthMask(true);
+    
+		// Clear window 
+		R3Rgb background = scene->background;
+		glClearColor(background[0], background[1], background[2], background[3]);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+		// Load camera
+		if (i == 0)
+			LoadCamera(&camera);
+		if (i == 1)
+			LoadCamera2(&camera);
+
+		// Load scene lights
+		LoadLights(scene);
+    
+		// Draw scene camera
+		//DrawCamera(scene);
+    
+		// Draw scene lights
+		//DrawLights(scene);
+    
+		// Draw scene surfaces
+		glEnable(GL_LIGHTING);
+    
+		front_intersection = false;
+		back_intersection = false;
+		left_intersection = false;
+		right_intersection = false;
+		top_intersection = false;
+		bottom_intersection = false;
+    
+		DrawScene(scene);
+    
+    
+		DrawProjectiles(scene);
+    
+		// Draw scene edges
+		glDisable(GL_LIGHTING);
+		glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		DrawScene(scene);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
+		if (i == 0) {
+		// Write The altitude and health
+		writeAltitude();
+		writeHealth();
+		}
+
+		#if defined(__APPLE__)
+		//Nader
+		//Receive data from companion
+		if (two_player)
+		{
+			if (is_server)//checked
+			{
+         		//cout << "here" << endl;
+         	
+				if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
+						   (struct sockaddr*)&si_other, slen)==-1)
+					diep("sendto()"); 
+         	
+         		my_info.xp = (-old_ship_pos.X() + ship_pos.X());
+				my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
+				my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
+            
+         		//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
+				R3Vector vec = R3Vector(net_info.yp
+										,net_info.xp
+										, net_info.zp
+										);
+				other_ship->transformation.Translate(vec);
+				net_info.xp = 0;
+         		net_info.yp = 0;
+         		net_info.zp = 0;
+			}
+			if (is_client)//checked
+			{
+				if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
+						   (struct sockaddr*)&si_other, slen)==-1)
+					diep("sendto()");
+            
+            
+				my_info.xp = (ship_pos.X()-old_ship_pos.X());
+				my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
+				my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
+            
+            
+				//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
+         		R3Vector vec = R3Vector(net_info.xp
+										,net_info.yp
+										, net_info.zp
+										);
+				other_ship->transformation.Translate(vec);
+				net_info.xp = 0;
+         		net_info.yp = 0;
+         		net_info.zp = 0;
+			}
+		}
+		#endif
+	    
+		// added for smoke
+		//glEnable(GL_COLOR_MATERIAL);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_DEPTH_TEST);
+		// draw smoke
+		//drawParticles(smokeParticles,0,10,20,2,2,2);
+	
+		glutSwapBuffers();
+		glFlush();
+	}
 }
 
 // Awais
