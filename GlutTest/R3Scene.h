@@ -213,7 +213,7 @@ public:
     SFEnemy(void);
     SFEnemy(const SFEnemy& enemy);
     SFEnemy(int fix);
-    SFEnemy(int fix, R3Mesh& mesh, R3Vector& initialVelocity);
+    SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity);
     
     //  void Update(void);  //handled in gluttest.cpp
     
@@ -235,6 +235,7 @@ public:
     R3Point projectileSource;        //source of projectiles
     
     R3Node *node;
+    R3Mesh *mesh;
 };
 
 struct SFProjectile {

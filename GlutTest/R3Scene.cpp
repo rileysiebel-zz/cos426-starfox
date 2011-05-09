@@ -45,12 +45,13 @@ projectileSpeed(.1)
 //SFEnemy::SFEnemy(const SFEnemy& enemy);
 //SFEnemy::SFEnemy(int fix);
 
-SFEnemy::SFEnemy(int fix, R3Mesh& mesh, R3Vector& initialVelocity)
+SFEnemy::SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity)
 : fixed(fix),
 movementPath(initialVelocity),
 projectileLength(1),
 projectileSpeed(.1),
-projectileSource(mesh.Center())
+projectileSource(mesh->Center()),
+mesh(mesh)
 {
 }
 
@@ -155,6 +156,7 @@ Read(const char *filename, R3Node *node)
             node->bbox.Union(p1);
             node->bbox.Union(p2);
             node->bbox.Union(p3);
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -201,6 +203,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = *box;
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -248,6 +251,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = sphere->BBox();
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -295,6 +299,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = cylinder->BBox();
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -359,6 +364,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = mesh->bbox;
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -424,6 +430,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = mesh->bbox;
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -556,7 +563,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = mesh->bbox;
-            node->enemy = new SFEnemy(fixed, *mesh, *initialVelocity);
+            node->enemy = new SFEnemy(fixed, mesh, *initialVelocity);
             
             node->enemy->position = shape->mesh->Center();
             node->enemy->projectileSource = shape->mesh->Center();
@@ -610,6 +617,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = cone->BBox();
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -656,6 +664,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = segment->BBox();
+            node->enemy = NULL;
             
             // Insert node
             group_nodes[depth]->bbox.Union(node->bbox);
@@ -693,6 +702,7 @@ Read(const char *filename, R3Node *node)
             node->material = NULL;
             node->shape = NULL;
             node->bbox = R3null_box;
+            node->enemy = NULL;
             
             // Push node onto stack
             depth++;
