@@ -241,10 +241,11 @@ struct SFProjectile {
     //constructor
 public:
     SFProjectile(void);
-    SFProjectile(double spd);
+    SFProjectile(double spd, R3Node *pNode);
     
 public:
     R3Segment segment;
     double power;
     double speed;
+    R3Node *parentNode;
 };
