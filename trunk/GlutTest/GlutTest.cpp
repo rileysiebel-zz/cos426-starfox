@@ -67,7 +67,7 @@ static int GLUTwindow_width = 800;
 
 // START: Varaibles by Awais
 
-double epsilon = 0.005;
+double epsilon = 0.02;
 double collision_epsilon = .1;
 double cull_depth = 100;
 double cull_behind_cutoff = 5;
@@ -77,6 +77,7 @@ R3Mesh *ship;
 R3Node *other_ship;
 R3Matrix trans;
 double shipTipX,shipTipY,shipTipZ;
+R3Point shipLeftWing, shipRightWing;
 
 // texture variables
 GLuint texBrick;
@@ -126,8 +127,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.01;
-double shipSpeed = 0.01;
+double cameraSpeed = 0.51;
+double shipSpeed = 0.51;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -447,6 +448,10 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
         ship_pos = t;
         trans = transformation;
         DrawShape(node->shape);
+
+		// setting the wings points
+		shipLeftWing = transformation * node->shape->mesh->Face(33)->vertices.at(0)->position;
+		shipRightWing = transformation * node->shape->mesh->Face(73)->vertices.at(0)->position;
     }
     R3Point box_center = transformation * node->bbox.Centroid();
     double edge_length = (node->bbox.YMax() - node->bbox.YMin())/2;
@@ -730,7 +735,7 @@ static void* receive_data(void *threadid)
 #endif
 
 void GLUTRedraw(void) {
-    //fprintf(stderr, "%f\n", ship_pos.Z());
+	//fprintf(stderr, "%f\n", shipLeftWing.Z() - shipRightWing.Z());
     //fprintf(stderr, "Y\n%f\n%f\n", ship->Center().Y(), ship_pos.Y());
     //fprintf(stderr, "Z\n%f\n%f\n", ship->Center().Z(), ship_pos.Z());
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
@@ -770,7 +775,10 @@ void GLUTRedraw(void) {
     }
     if (rotationAngle) 
         computeRotation();
-    
+	if (!rightAngle && !leftAngle && !upAngle && !downAngle)
+		lookStraightRotate();
+
+
     //Update enemies
     updateEnemies();
     //Update projectiles
@@ -822,9 +830,10 @@ void GLUTRedraw(void) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
 
-	// Write The altitude
+	// Write The altitude and health
     writeAltitude();
-    
+    writeHealth();
+
 	#if defined(__APPLE__)
     //Nader
     //Receive data from companion
@@ -883,7 +892,7 @@ void GLUTRedraw(void) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
     // draw smoke
-	drawParticles(smokeParticles,0,10,20,2,2,2);
+	//drawParticles(smokeParticles,0,10,20,2,2,2);
 	
     glutSwapBuffers();
 }
@@ -1068,6 +1077,16 @@ void lookStraightUD() {
             ly = cos(cameraAngleUD);
         }
     }
+}
+
+void lookStraightRotate() {
+    double diff = shipLeftWing.Z() - shipRightWing.Z();
+    if ((diff) < -epsilon) {
+        ship->Rotate(-angleStep,R3Line(ship->Center(), camera.up));
+    }       
+    else if ((diff) > epsilon) {
+        ship->Rotate(angleStep,R3Line(ship->Center(), camera.up));
+    }       
 }
 
 void peakRight() {
@@ -1347,7 +1366,7 @@ void updateProjectiles(void)
             
             if (inter.hit)
             {
-                printf("hit something\n");
+                //printf("hit something\n");
             }
             else
             {
@@ -1452,7 +1471,7 @@ ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
                 inter.hit = 1;
                 inter.position = p;
                 inter.node = node;
-                printf("intersect with %d\n", node);
+                //printf("intersect with %d\n", node);
             }
         }
     } 
