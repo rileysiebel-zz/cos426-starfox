@@ -119,6 +119,7 @@ bool top_intersection = false;
 bool bottom_intersection = false;
 
 ProjectileInter projIntersect(R3Node *node, SFProjectile *proj);
+//R3Intersection projIntersect(R3Node *node, SFProjectile *proj);
 
 R3Point ship_pos = R3Point(0,0,0);
 
@@ -463,7 +464,7 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
         ship_pos = t;
         trans = transformation;
         DrawShape(node->shape);
-
+        
 		// setting the wings points
 		shipLeftWing = transformation * node->shape->mesh->Face(33)->vertices.at(0)->position;
 		shipRightWing = transformation * node->shape->mesh->Face(73)->vertices.at(0)->position;
@@ -489,6 +490,9 @@ void DrawNode(R3Scene *scene, R3Node *node, R3Matrix transformation)
         //BBoxes are not explicit-- we have to compute them.
         if (node->shape->mesh != NULL)
         {
+            /* if (node->enemy != NULL)
+             c = node->cumulativeTransformation * node->shape->mesh->Center();
+             else*/
             c = transformation * node->shape->mesh->Center();
             xmid = node->shape->mesh->Radius();
             ymid = node->shape->mesh->Radius();
@@ -722,7 +726,7 @@ void GLUTResize(int w, int h) {
 	// for resizing
 	GLUTwindow_width = w;
 	GLUTwindow_height = h;
-
+    
     // Use the Projection Matrix
     glMatrixMode(GL_PROJECTION);
     
@@ -777,17 +781,17 @@ void GLUTRedraw(void) {
 		}
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-
+        
 		R3Point old_ship_pos = ship_pos;
 		// Awais
 		// move camera and the ship forward
 		if (deltaMoveX || deltaMoveZ)
 			computePos(deltaMoveX, deltaMoveZ);
-    
+        
 		moveForward();
 		updateShip();
 		//Reset the intersection
-    
+        
 		// left-right-up-down movement in viewplane
 		// angle movement in LR direction
 		if (!left_intersection && !right_intersection)
@@ -813,68 +817,68 @@ void GLUTRedraw(void) {
 			computeRotation();
 		if (!rightAngle && !leftAngle && !upAngle && !downAngle)
 			lookStraightRotate();
-
-
+        
+        
 		//Update enemies
 		updateEnemies();
 		//Update projectiles
 		updateProjectiles();
-    
+        
 		// Initialize OpenGL drawing modes
 		glEnable(GL_LIGHTING);
 		glDisable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ZERO);
 		glDepthMask(true);
-    
+        
 		// Clear window 
 		R3Rgb background = scene->background;
 		glClearColor(background[0], background[1], background[2], background[3]);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+        
 		// Load camera
 		if (i == 0)
 			LoadCamera(&camera);
 		if (i == 1)
 			LoadCamera2(&camera);
-
+        
 		// Load scene lights
 		LoadLights(scene);
-    
+        
 		// Draw scene camera
 		//DrawCamera(scene);
-    
+        
 		// Draw scene lights
 		//DrawLights(scene);
-    
+        
 		// Draw scene surfaces
 		glEnable(GL_LIGHTING);
-    
+        
 		front_intersection = false;
 		back_intersection = false;
 		left_intersection = false;
 		right_intersection = false;
 		top_intersection = false;
 		bottom_intersection = false;
-    
+        
 		DrawScene(scene);
-    
-    
+        
+        
 		DrawProjectiles(scene);
-    
+        
 		// Draw scene edges
 		glDisable(GL_LIGHTING);
 		glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		DrawScene(scene);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    
+        
 		if (i == 0) {
-		// Write The altitude and health
-		writeAltitude();
-		writeHealth();
+            // Write The altitude and health
+            writeAltitude();
+            writeHealth();
 		}
-
-		#if defined(__APPLE__)
+        
+#if defined(__APPLE__)
 		//Nader
 		//Receive data from companion
 		if (two_player)
@@ -882,15 +886,15 @@ void GLUTRedraw(void) {
 			if (is_server)//checked
 			{
          		//cout << "here" << endl;
-         	
+                
 				if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
 						   (struct sockaddr*)&si_other, slen)==-1)
 					diep("sendto()"); 
-         	
+                
          		my_info.xp = (-old_ship_pos.X() + ship_pos.X());
 				my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
 				my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
-            
+                
          		//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
 				R3Vector vec = R3Vector(net_info.yp
 										,net_info.xp
@@ -906,13 +910,13 @@ void GLUTRedraw(void) {
 				if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
 						   (struct sockaddr*)&si_other, slen)==-1)
 					diep("sendto()");
-            
-            
+                
+                
 				my_info.xp = (ship_pos.X()-old_ship_pos.X());
 				my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
 				my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
-            
-            
+                
+                
 				//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
          		R3Vector vec = R3Vector(net_info.xp
 										,net_info.yp
@@ -924,7 +928,7 @@ void GLUTRedraw(void) {
          		net_info.zp = 0;
 			}
 		}
-		#endif
+#endif
 	    
 		// added for smoke
 		//glEnable(GL_COLOR_MATERIAL);
@@ -933,7 +937,7 @@ void GLUTRedraw(void) {
 		glEnable(GL_DEPTH_TEST);
 		// draw smoke
 		//drawParticles(smokeParticles,0,10,20,2,2,2,&ship_pos,cull_depth,5);
-	
+        
 		glutSwapBuffers();
 		glFlush();
 	}
@@ -1214,6 +1218,7 @@ void updateShip() {
     if (front_intersection)
         z_move = 0;
     ship->Translate(x_move, y_move, z_move);
+    //ship->bbox.Translate(R3Vector(x_move, y_move, z_move));
 }
 
 //Awais
@@ -1337,7 +1342,7 @@ void updateEnemies(void)
             
             enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
             
-        //    printf("arwing pos %f:%f:%f\n", ship_pos.X(), ship_pos.Y(), ship_pos.Z());
+            //    printf("arwing pos %f:%f:%f\n", ship_pos.X(), ship_pos.Y(), ship_pos.Z());
             
             //      printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
             
@@ -1350,9 +1355,9 @@ void updateEnemies(void)
             
             //    projDir *= 4;
             
-            proj->segment = *(new R3Segment(enemyPos, enemyPos + projDir));
+            proj->segment = *(new R3Segment(enemyPos, projDir));
             
-         //   printf("new proj from %f %f %f   to %f %f %f \n",proj->segment.Start().X(),proj->segment.Start().Y(),proj->segment.Start().Z(),proj->segment.End().X(),proj->segment.End().Y(),proj->segment.End().Z());
+            //   printf("new proj from %f %f %f   to %f %f %f \n",proj->segment.Start().X(),proj->segment.Start().Y(),proj->segment.Start().Z(),proj->segment.End().X(),proj->segment.End().Y(),proj->segment.End().Z());
             
             scene->projectiles.push_back(proj);
             
@@ -1372,6 +1377,7 @@ void updateEnemies(void)
             projNode->material = enemy->node->material;
             projNode->shape = shape;
             projNode->bbox = proj->segment.BBox();
+            projNode->enemy = NULL;
             
             //Note: specifically choosing NOT to merge bboxes with the generating enemy
             enemy->node->children.push_back(projNode);
@@ -1397,18 +1403,20 @@ void updateProjectiles(void)
         }
         else
         {
-         /*   printf("proj->parentNode  %d\n", proj->parentNode);
-            
-            printf("scene root %d\n", scene->root);
-            
-            printf("arwing %d\n", scene->arwingNode); 
-           */ 
+            /*   printf("proj->parentNode  %d\n", proj->parentNode);
+             
+             printf("scene root %d\n", scene->root);
+             
+             printf("arwing %d\n", scene->arwingNode); 
+             */ 
             //calcluate for intersection with object on next move
             ProjectileInter inter = projIntersect(scene->root, proj);
             
+            //R3Intersection inter = ComputeIntersection(scene, scene->root, (R3Ray *)&proj->segment.Ray());
+            
             if (inter.hit)
             {
-                //printf("hit something\n");
+               // printf("hit node %d     ", inter.node);
             }
             else
             {
@@ -1430,96 +1438,281 @@ void updateProjectiles(void)
     }
 }
 
+/*R3Intersection projIntersect(R3Node *node, SFProjectile *proj)
+ {
+ R3Point p = proj->segment.End();
+ R3Point m = proj->segment.Midpoint();
+ R3Intersection closest;
+ R3Intersection inter;
+ 
+ closest.hit = 0;
+ closest.t = DBL_MAX;
+ 
+ for (int i = 0; i < scene->NEnemies(); i++)
+ {
+ SFEnemy *enemy = scene->Enemy(i);
+ R3Box box = enemy->node->bbox;
+ 
+ box.Draw();
+ 
+ inter = RayBox(scene, (R3Ray *)&proj->segment.Ray(), enemy->node->bbox);
+ 
+ if (inter.hit 
+ //&& inter.node != proj->parentNode
+ //&& inter.t <= proj->segment.Length() 
+ )//&& inter.t < closest.t)
+ {
+ closest = inter;
+ printf("intered\n");
+ } 
+ 
+ //    if (proj->parentNode != enemy->node)
+ {
+ if ((box.XMax() + epsilon >= p.X() && box.XMin() - epsilon <= p.X()) 
+ && (box.YMax() + epsilon >= p.Y() && box.YMin() - epsilon <= p.Y()) 
+ && (box.ZMax() + epsilon >= p.Z() && box.ZMin() - epsilon <= p.Z()))
+ {
+ inter.hit = 1;
+ inter.position = p;
+ inter.node = enemy->node;
+ printf("intersect with %d\n", node);
+ }
+ else if ((box.XMax() + epsilon >= m.X() && box.XMin() - epsilon <= m.X()) 
+ && (box.YMax() + epsilon >= m.Y() && box.YMin() - epsilon <= m.Y()) 
+ && (box.ZMax() + epsilon >= m.Z() && box.ZMin() - epsilon <= m.Z()))
+ {
+ inter.hit = 1;
+ inter.position = p;
+ inter.node = enemy->node;
+ printf("intersect with %d\n", node);
+ }
+ 
+ } 
+ 
+ }
+ 
+ return closest; */
+
+/* this version needs better checks on which nodes to ignore.
+ * the problem is that lasers are intersecting with various
+ * scene bboxes - basically where nothing actually is, but where
+ * it is contaiend within the scene */
 ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
 {
-  /*  R3Point p = proj->segment.End();
-    R3Point m = proj->segment.Midpoint();
-    R3Intersection closest;
-    R3Intersection inter;
+    R3Point pos = proj->segment.End();
+    R3Box box = node->bbox;
+    ProjectileInter inter;
+    ProjectileInter best; 
     
-    closest.hit = 0;
-    closest.t = DBL_MAX;
-    
-    for (int i = 0; i < scene->NEnemies(); i++)
-    {
-        SFEnemy *enemy = scene->Enemy(i);
-        R3Box box = enemy->node->bbox;
-        
-        box.Draw();
-        
-            inter = RayMesh(scene, (R3Ray *)&proj->segment.Ray(), *enemy->node->shape->mesh);
-            
-            if (inter.hit 
-                //&& inter.node != proj->parentNode
-                //&& inter.t <= proj->segment.Length() 
-                )//&& inter.t < closest.t)
-            {
-                closest = inter;
-                printf("intered\n");
-            } 
-        
-         //    if (proj->parentNode != enemy->node)
-         {
-         if ((box.XMax() + epsilon >= p.X() && box.XMin() - epsilon <= p.X()) 
-         && (box.YMax() + epsilon >= p.Y() && box.YMin() - epsilon <= p.Y()) 
-         && (box.ZMax() + epsilon >= p.Z() && box.ZMin() - epsilon <= p.Z()))
-         {
-         inter.hit = 1;
-         inter.position = p;
-         inter.node = enemy->node;
-         printf("intersect with %d\n", node);
-         }
-         else if ((box.XMax() + epsilon >= m.X() && box.XMin() - epsilon <= m.X()) 
-         && (box.YMax() + epsilon >= m.Y() && box.YMin() - epsilon <= m.Y()) 
-         && (box.ZMax() + epsilon >= m.Z() && box.ZMin() - epsilon <= m.Z()))
-         {
-         inter.hit = 1;
-         inter.position = p;
-         inter.node = enemy->node;
-         printf("intersect with %d\n", node);
-         }
-         
-         } 
-        
-    }*/
-    
-    /* this version needs better checks on which nodes to ignore.
-     * the problem is that lasers are intersecting with various
-     * scene bboxes - basically where nothing actually is, but where
-     * it is contaiend within the scene */
-     R3Point p = proj->segment.End();
-     R3Box box = node->bbox;
-     ProjectileInter inter;
-    
-    inter.hit = 0;
+    //pos.Transform(node->transformation);
     
     
+    best.node = scene->root;
+    best.hit = 0;
     
     //later, add a check for non-null parent node (could have been
     //destroyed
-   // if (node != proj->parentNode)// && (node->enemy != NULL || node == scene->arwingNode))
+    // if (node != proj->parentNode)// && (node->enemy != NULL || node == scene->arwingNode))
     {
         for (int i = 0; i < node->children.size(); i++)
         {
             inter = projIntersect(node->children[i], proj);
+            
+            if (inter.hit)
+            {
+                //   R3Box a = inter.node->bbox;
+                if (inter.node->bbox.DiagonalLength() < best.node->bbox.DiagonalLength())
+                    best = inter;
+            }
+            else
+            {
+                best.hit = 0;
+                best.node = scene->root;
+            }
         }
         
-        if (node->enemy != NULL)// && node != scene->arwingNode)
+        if /*(node->enemy != NULL || */(node == scene->arwingNode)
         {
-            if ((box.XMax() + epsilon >= p.X() && box.XMin() - epsilon <= p.X()) 
-                && (box.YMax() + epsilon >= p.Y() && box.YMin() - epsilon <= p.Y()) 
-                && (box.ZMax() + epsilon >= p.Z() && box.ZMin() - epsilon <= p.Z()))
+            printf("pos %f %f %f\n", pos.X(), pos.Y(), pos.Z());
+            
+            printf("arwing center %f %f %f\n", box.Centroid().X(), box.Centroid().Y(), box.Centroid().Z());
+            
+            double xTargetDiff = fabs(box.XMax() - box.XMin());
+            double yTargetDiff = fabs(box.YMax() - box.YMin());
+            double zTargetDiff = fabs(box.ZMax() - box.ZMin());
+            
+            if (fabs(box.YMax() - pos.Y()) <= yTargetDiff + epsilon
+                && fabs(box.XMax() - pos.X()) <= xTargetDiff + epsilon
+                && fabs(box.YMin() - pos.Y()) <= yTargetDiff + epsilon
+                && fabs(box.XMin() - pos.X()) <= xTargetDiff + epsilon
+                && fabs(box.ZMax() - pos.Z()) <= zTargetDiff + epsilon
+                && fabs(box.ZMin() - pos.Z()) <= zTargetDiff + epsilon)
             {
-                inter.hit = 1;
-                inter.position = p;
-                inter.node = node;
-                //printf("intersect with %d\n", node);
+                best.hit = 1;
+                best.position = pos;
+                best.node = node;
+                printf("intersect with %d\n", node);
             }
         }
     } 
     
-    return inter; 
-}
+    return best; 
+} 
+
+
+/*ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
+ {
+ ProjectileInter best;
+    best.node = NULL;
+    ProjectileInter inter;
+    
+    if (node != scene->root && (node == scene->arwingNode || node->enemy != NULL))
+    {
+        R3Point pos = proj->segment.End();
+        R3Box box = node->bbox;
+        
+        double xTargetDiff = fabs(box.XMax() - box.XMin());
+        double yTargetDiff = fabs(box.YMax() - box.YMin());
+        double zTargetDiff = fabs(box.ZMax() - box.ZMin());
+        
+        if (fabs(box.YMax() - pos.Y()) <= yTargetDiff + epsilon
+            && fabs(box.XMax() - pos.X()) <= xTargetDiff + epsilon
+            && fabs(box.YMin() - pos.Y()) <= yTargetDiff + epsilon
+            && fabs(box.XMin() - pos.X()) <= xTargetDiff + epsilon
+            && fabs(box.ZMax() - pos.Z()) <= zTargetDiff + epsilon
+            && fabs(box.ZMin() - pos.Z()) <= zTargetDiff + epsilon)
+        {
+            best.hit = 1;
+            best.position = pos;
+            best.node = node;
+        }
+        else
+        {
+            //  best.hit = 0;
+            best.node = NULL;
+        }
+    }
+    
+    if (node != proj->parentNode)
+    {
+        for (int i = 0; i < node->children.size(); i++)
+        {
+            inter = projIntersect(node->children[i], proj);
+            
+            if (inter.hit)
+            {
+                if (best.node == NULL || inter.node->bbox.DiagonalLength() < best.node->bbox.DiagonalLength())
+                {
+                    best.hit = 1;
+                    best.position = inter.position;
+                    best.node = inter.node;
+                }
+            }
+            else
+            {
+                best.hit = 0;
+                best.node = NULL;
+            }
+            
+        }
+    }
+    
+    return best;
+} */
+
+/*ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
+{
+    ProjectileInter inter;
+    inter.hit = 0;
+    
+    for (int i = 0; i < scene->NEnemies(); i++)
+    {
+        SFEnemy *enemy = scene->Enemy(i);
+        R3Point pos = proj->segment.End();
+        R3Box box = enemy->node->bbox;
+        
+        double xTargetDiff = fabs(box.XMax() - box.XMin());
+        double yTargetDiff = fabs(box.YMax() - box.YMin());
+        double zTargetDiff = fabs(box.ZMax() - box.ZMin());
+        
+        if (fabs(box.YMax() - pos.Y()) <= yTargetDiff + epsilon
+            && fabs(box.XMax() - pos.X()) <= xTargetDiff + epsilon
+            && fabs(box.YMin() - pos.Y()) <= yTargetDiff + epsilon
+            && fabs(box.XMin() - pos.X()) <= xTargetDiff + epsilon
+            && fabs(box.ZMax() - pos.Z()) <= zTargetDiff + epsilon
+            && fabs(box.ZMin() - pos.Z()) <= zTargetDiff + epsilon)
+        {
+            inter.hit = 1;
+            inter.position = pos;
+            inter.node = node;
+        }
+
+    }
+    
+    return inter;
+} */
+/*
+ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
+{
+    ProjectileInter best;
+    best.node = NULL;
+    best.hit = 0;
+    ProjectileInter inter;
+    
+    if (node->enemy != NULL || node == scene->arwingNode)
+    {
+        R3Point pos = proj->segment.End();
+        R3Box box = node->bbox;
+        
+        //pos.Transform(node->cumulativeTransformation);
+        
+        double xTargetDiff = fabs(box.XMax() - box.XMin());
+        double yTargetDiff = fabs(box.YMax() - box.YMin());
+        double zTargetDiff = fabs(box.ZMax() - box.ZMin());
+        
+        if (fabs(box.YMax() - pos.Y()) <= yTargetDiff + epsilon
+            && fabs(box.XMax() - pos.X()) <= xTargetDiff + epsilon
+            && fabs(box.YMin() - pos.Y()) <= yTargetDiff + epsilon
+            && fabs(box.XMin() - pos.X()) <= xTargetDiff + epsilon
+            && fabs(box.ZMax() - pos.Z()) <= zTargetDiff + epsilon
+            && fabs(box.ZMin() - pos.Z()) <= zTargetDiff + epsilon)
+        {
+        //    printf("hit SOMEWHERE   %d --- ", node);
+            //fflush(stdout);
+            best.hit = 1;
+            best.position = pos;
+            best.node = node;
+        }
+        else
+        {
+            //  best.hit = 0;
+            //best.node = NULL;
+        }
+    }
+        for (int i = 0; i < node->children.size(); i++)
+        {
+            inter = projIntersect(node->children[i], proj);
+            
+            if (inter.hit)
+            {
+                if (best.node == NULL || inter.node->bbox.DiagonalLength() < best.node->bbox.DiagonalLength())
+                {
+                    best.hit = 1;
+                    best.position = inter.position;
+                    best.node = inter.node;
+                }
+            }
+            else
+            {
+                //best.hit = 0;
+                //best.node = NULL;
+            }
+            
+        }
+    
+    return best;
+}*/
+
 
 void arwingShoot(void)
 {
@@ -1556,6 +1749,7 @@ void arwingShoot(void)
     leftNode->material = scene->arwingNode->material;
     leftNode->shape = shape;
     leftNode->bbox = left->segment.BBox();
+    leftNode->enemy = NULL;
     
     // Create scene graph node for right laser
     shape = new R3Shape();
@@ -1572,6 +1766,7 @@ void arwingShoot(void)
     rightNode->material = scene->arwingNode->material;
     rightNode->shape = shape;
     rightNode->bbox = right->segment.BBox();
+    rightNode->enemy = NULL;
     
     //Note: specifically choosing NOT to merge bboxes with the arwing
     scene->arwingNode->children.push_back(leftNode);
@@ -1662,7 +1857,7 @@ void GLUTInit(int *argc, char **argv) {
     glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
     glutCreateWindow("StarFox");
     
-	#if defined(__APPLE__)
+#if defined(__APPLE__)
     if (*argc == 2)
     {	
         two_player = true;
@@ -1671,8 +1866,8 @@ void GLUTInit(int *argc, char **argv) {
         if (strcmp(argv[1], "-c") == 0)
             is_client = true;
     }
-	#endif
-
+#endif
+    
     // register callbacks
     glutDisplayFunc(GLUTRedraw);
     glutReshapeFunc(GLUTResize);
@@ -1688,11 +1883,11 @@ void GLUTInit(int *argc, char **argv) {
     
     // OpenGL init
     glEnable(GL_DEPTH_TEST); 
-
-	#if defined(__APPLE__)
+    
+#if defined(__APPLE__)
    	//Set up a listening socket
     set_up_socket();
-	#endif
+#endif
    	
    	// smoke texturing
 	Image* image = loadBMP("images/circle.bmp");
@@ -1743,8 +1938,8 @@ ReadScene(const char *filename) {
     // get the ship
     
     ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
-
-	#if defined(__APPLE__)
+    
+#if defined(__APPLE__)
     if (two_player)
     {
         if (is_server) //checked
@@ -1797,8 +1992,8 @@ ReadScene(const char *filename) {
         my_info.zp = 0;
       	
     }
-	#endif
-
+#endif
+    
     shipTipX = ship->Center().X() - ship->Face(200)->vertices.at(0)->position.X();
     shipTipY = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
     shipTipZ = ship->Center().Z() - ship->Face(200)->vertices.at(0)->position.Z();
@@ -1931,11 +2126,17 @@ int main(int argc, char **argv) {
     scene = ReadScene(input_scene_name);
     if(!scene) exit(-1);
     
+    
+    printf("root %d, arwing %d\n", scene->root, scene->arwingNode);
+    for (int i = 0; i < scene->root->children.size(); i++)
+        printf("root child %d: %d\n", i,scene->root->children[i]);
+    
+    
 	// smoke
 	smokeParticles = new ParticleEngine(smokeTexture);
 	glutTimerFunc(TIMER_MS, updateParticle, 0);
-
-
+    
+    
     GLUTMainLoop();
     
     return 0;

@@ -1,7 +1,7 @@
 # 
 # List of source files
 #
-MESHVIEW_SRCS= GlutTest.cpp R3Scene.cpp imageloader.cpp vec3f.cpp smoke.cpp
+MESHVIEW_SRCS= GlutTest.cpp R3Scene.cpp imageloader.cpp vec3f.cpp smoke.cpp 
 MESHVIEW_OBJS=$(MESHVIEW_SRCS:.cpp=.o)
 
 
