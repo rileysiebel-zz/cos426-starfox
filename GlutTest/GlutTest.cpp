@@ -82,7 +82,7 @@ double cull_behind_cutoff = 50;
 
 // this is Arwing
 R3Mesh *ship;
-R3Node *shipNode;
+R3Matrix *tempMatrix;
 R3Node *other_ship;
 R3Matrix trans;
 double shipTipX,shipTipY,shipTipZ;
@@ -951,10 +951,10 @@ static void* receive_data(void *threadid)
 		// draw smoke
 		//vector<R3Point> *abc = new vector<R3Point>;
 		//abc->push_back(R3Point(0,10,20));
-		//abc->push_back(R3Point(0,10,20));
+		//abc->push_back(R3Point(0,20,20));
 
 		//for (int i = 0; i < abc->size(); i++) {
-		//	drawParticles(smokeParticles,0,50,20,2,2,2,&ship_pos,500,5);
+		//	drawParticles(smokeParticles,abc->at(i).X(),abc->at(i).Y(),abc->at(i).Z(),2,2,2,&ship_pos,500,5);
 		//}
 
          glutSwapBuffers();
@@ -1050,8 +1050,8 @@ static void* receive_data(void *threadid)
             break;
 		case GLUT_KEY_F4:
 			if (cameraSpeed == 0.00 && shipSpeed == 0.00) {
-				cameraSpeed = 0.01;
-				shipSpeed = 0.01;
+				cameraSpeed = 0.51;
+				shipSpeed = 0.51;
 			}
 			else {
 				cameraSpeed = 0.00;
@@ -1246,13 +1246,13 @@ static void* receive_data(void *threadid)
         y_move = 0*y_move;
     if (front_intersection)
         z_move = 0;
-	shipNode->transformation.Translate(0,deltaMoveX);
-	shipNode->transformation.Translate(1,deltaMoveZ);
-	shipNode->transformation.Translate(2,-shipSpeed);	
-    
+	tempMatrix->Translate(0,deltaMoveX);
+	tempMatrix->Translate(1,deltaMoveZ);
+	tempMatrix->Translate(2,-shipSpeed);	
+	
     //can change these two lines to node matrix transformation
-    //ship->Translate(x_move, y_move, z_move);
-    //scene->arwingNode->bbox.Translate(R3Vector(x_move, y_move, z_move));
+    ship->Translate(x_move, y_move, z_move);
+    scene->arwingNode->bbox.Translate(R3Vector(x_move, y_move, z_move));
 }
 
 //Awais
@@ -1840,9 +1840,8 @@ static void set_up_socket()
       lz = camera.towards.Z();
     // get the ship
     
-      ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
-	shipNode = scene->Root()->children.at(0)->children.at(0);
-	//shipNode->transformation.
+    ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
+	tempMatrix = new R3Matrix(scene->Root()->children.at(0)->children.at(0)->transformation);
 
    #if defined(__APPLE__)
     if (two_player)
