@@ -74,19 +74,19 @@ static struct info_to_send my_info;
 
 // START: Varaibles by Awais
 
-double epsilon = 0.02;
-double collision_epsilon = .1;
-double cull_depth = 1000;
-double laser_cull_depth = 100;
-double cull_behind_cutoff = 50;
+   double epsilon = 0.02;
+   double collision_epsilon = .1;
+   double cull_depth = 1000;
+   double laser_cull_depth = 100;
+   double cull_behind_cutoff = 50;
 
 // this is Arwing
-R3Mesh *ship;
-R3Matrix *tempMatrix;
-R3Node *other_ship;
-R3Matrix trans;
-double shipTipX,shipTipY,shipTipZ;
-R3Point shipLeftWing, shipRightWing;
+   R3Mesh *ship;
+   R3Matrix *tempMatrix;
+   R3Node *other_ship;
+   R3Matrix trans;
+   double shipTipX,shipTipY,shipTipZ;
+   R3Point shipLeftWing, shipRightWing;
 
 // texture variables
    GLuint texBrick;
@@ -128,7 +128,7 @@ R3Point shipLeftWing, shipRightWing;
    bool bottom_intersection = false;
 
 //ProjectileInter projIntersect(R3Node *node, SFProjectile *proj, R3Matrix transformation);
-ProjectileInter projIntersect(SFProjectile *proj);
+   ProjectileInter projIntersect(SFProjectile *proj);
 
    R3Point ship_pos = R3Point(0,0,0);
 
@@ -137,8 +137,8 @@ ProjectileInter projIntersect(SFProjectile *proj);
    double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.05;
-double shipSpeed = 0.05;
+   double cameraSpeed = 0.00;
+   double shipSpeed = 0.00;
 
 // mutilple views
    enum view {INSIDE, OUTSIDE};
@@ -146,14 +146,14 @@ double shipSpeed = 0.05;
 
 // Health
    double health = 100;
-int laserStrength = 5;
+   int laserStrength = 5;
 
 // Smoke variables
    const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
    ParticleEngine* smokeParticles;
    GLuint smokeTexture;
-vector<SFEnemy *> smokeSources;
-void DrawSmoke(void);
+   vector<SFEnemy *> smokeSources;
+   void DrawSmoke(void);
 
 // END: Variables by Awais
 
@@ -777,23 +777,23 @@ static void* receive_data(void *threadid)
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
     //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
-
-	glEnable(GL_SCISSOR_TEST);
-	for (int i = 0; i < 2; i ++) {
-		if (i == 0) {
-			glViewport(0,0,GLUTwindow_width,GLUTwindow_height-200);
-			glScissor(0,0,GLUTwindow_width,GLUTwindow_height-200);
-			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-		}
-		if ( i == 1) {
-			glViewport(0,GLUTwindow_height-200,GLUTwindow_width,200);
-			glScissor(0,GLUTwindow_height-200,GLUTwindow_width,200);
-			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-		}
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
+   
+      glEnable(GL_SCISSOR_TEST);
+      for (int i = 0; i < 2; i ++) {
+         if (i == 0) {
+            glViewport(0,0,GLUTwindow_width,GLUTwindow_height-200);
+            glScissor(0,0,GLUTwindow_width,GLUTwindow_height-200);
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+         }
+         if ( i == 1) {
+            glViewport(0,GLUTwindow_height-200,GLUTwindow_width,200);
+            glScissor(0,GLUTwindow_height-200,GLUTwindow_width,200);
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+         }
+         glMatrixMode(GL_MODELVIEW);
+         glLoadIdentity();
         
          R3Point old_ship_pos = ship_pos;
       // Awais
@@ -879,12 +879,12 @@ static void* receive_data(void *threadid)
         
         
         
-		// Draw scene edges
-		glDisable(GL_LIGHTING);
-		glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawScene(scene);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      // Draw scene edges
+         glDisable(GL_LIGHTING);
+         glColor3d(1 - background[0], 1 - background[1], 1 - background[2]);
+         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+         DrawScene(scene);
+         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         
          if (i == 0) {
             // Write The altitude and health
@@ -898,44 +898,41 @@ static void* receive_data(void *threadid)
       if (two_player)
       {
          		//cout << "here" << endl;
-      			my_info.xp = 1;
-      			my_info.yp = 1;
-      			my_info.zp = 1;
+      		my_info.xp = (*tempMatrix)[0][3];
+      		my_info.yp = (*tempMatrix)[1][3];
+        		my_info.zp = (*tempMatrix)[2][3];
+      		
+      		cout << my_info.zp << endl;
+      		cout << (*tempMatrix)[2][3] << endl;
+      		
       		if (sendto(s_in, &my_info, sizeof(struct info_to_send), 0, 
       						(struct sockaddr*) &si_other, slen)==-1)
                   diep("sendto()");
-                
-         		my_info.xp = (-old_ship_pos.X() + ship_pos.X());
-      		my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
-      		my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
-                
-         		//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
-      		R3Vector vec = R3Vector(net_info.yp
-      								,net_info.xp
-      								, net_info.zp
-      								);
-      		other_ship->transformation.Translate(vec);
-      		net_info.xp = 0;
-         		net_info.yp = 0;
-         		net_info.zp = 0;
-		}
-#endif
-	    
-		// added for smoke
-		//glEnable(GL_COLOR_MATERIAL);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_DEPTH_TEST);
-		// draw smoke
-		//vector<R3Point> *abc = new vector<R3Point>;
-		//abc->push_back(R3Point(0,10,20));
-		//abc->push_back(R3Point(0,20,20));
-
-		//for (int i = 0; i < abc->size(); i++) {
-		//	drawParticles(smokeParticles,abc->at(i).X(),abc->at(i).Y(),abc->at(i).Z(),2,2,2,&ship_pos,500,5);
-		//}
-
-       DrawSmoke();
+            
+      		R3Matrix temp = R3identity_matrix;
+      		temp[0][3] = net_info.xp; 
+      		temp[1][3] = net_info.yp;
+      		temp[2][3] = net_info.zp;
+      		
+      		other_ship->transformation = other_ship_matrix_helper * temp;
+      }
+      #endif
+       
+      // added for smoke
+      //glEnable(GL_COLOR_MATERIAL);
+         glEnable(GL_BLEND);
+         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+         glEnable(GL_DEPTH_TEST);
+      // draw smoke
+      //vector<R3Point> *abc = new vector<R3Point>;
+      //abc->push_back(R3Point(0,10,20));
+      //abc->push_back(R3Point(0,20,20));
+      
+      //for (int i = 0; i < abc->size(); i++) {
+      //	drawParticles(smokeParticles,abc->at(i).X(),abc->at(i).Y(),abc->at(i).Z(),2,2,2,&ship_pos,500,5);
+      //}
+      
+         DrawSmoke();
        
          glutSwapBuffers();
          glFlush();
@@ -1030,18 +1027,18 @@ static void* receive_data(void *threadid)
                currView = INSIDE;
             }
             break;
-		case GLUT_KEY_F4:
-			if (cameraSpeed == 0.00 && shipSpeed == 0.00) {
-				cameraSpeed = 0.51;
-				shipSpeed = 0.51;
-			}
-			else {
-				cameraSpeed = 0.00;
-				shipSpeed = 0.00;
-			}
-			break;
-    }
-}
+         case GLUT_KEY_F4:
+            if (cameraSpeed == 0.00 && shipSpeed == 0.00) {
+               cameraSpeed = 0.51;
+               shipSpeed = 0.51;
+            }
+            else {
+               cameraSpeed = 0.00;
+               shipSpeed = 0.00;
+            }
+            break;
+      }
+   }
 
 // Awais
 // release key tells what to do upon relese of a key
@@ -1218,24 +1215,24 @@ static void* receive_data(void *threadid)
       double y_move = deltaMoveZ;
       double z_move = -shipSpeed;
     
-    if (left_intersection &&  x_move > 0)
-        x_move = 0* x_move;
-    if (right_intersection && x_move < 0)
-        x_move = 0*x_move;
-    if (top_intersection && y_move < 0)
-        y_move = 0*y_move;
-    if (bottom_intersection && y_move > 0)
-        y_move = 0*y_move;
-    if (front_intersection)
-        z_move = 0;
-	tempMatrix->Translate(0,deltaMoveX);
-	tempMatrix->Translate(1,deltaMoveZ);
-	tempMatrix->Translate(2,-shipSpeed);	
-	
+      if (left_intersection &&  x_move > 0)
+         x_move = 0* x_move;
+      if (right_intersection && x_move < 0)
+         x_move = 0*x_move;
+      if (top_intersection && y_move < 0)
+         y_move = 0*y_move;
+      if (bottom_intersection && y_move > 0)
+         y_move = 0*y_move;
+      if (front_intersection)
+         z_move = 0;
+      tempMatrix->Translate(0,deltaMoveX);
+      tempMatrix->Translate(1,deltaMoveZ);
+      tempMatrix->Translate(2,-shipSpeed);	
+   
     //can change these two lines to node matrix transformation
-    ship->Translate(x_move, y_move, z_move);
-    scene->arwingNode->bbox.Translate(R3Vector(x_move, y_move, z_move));
-}
+      ship->Translate(x_move, y_move, z_move);
+      scene->arwingNode->bbox.Translate(R3Vector(x_move, y_move, z_move));
+   }
 
 //Awais
 // code adapted from http://www.lighthouse3d.com
@@ -1333,40 +1330,40 @@ static void* receive_data(void *threadid)
 
 //Kevin
 //have enemies move, shoot
-void updateEnemies(void)
-{
-    vector<int> deletionIndices;
+   void updateEnemies(void)
+   {
+      vector<int> deletionIndices;
     
-    for (int i = 0; i < scene->NEnemies(); i++)
-    {
-        R3Vector y = *(new R3Vector(0,1,0));
-        SFEnemy *enemy = scene->Enemy(i);
+      for (int i = 0; i < scene->NEnemies(); i++)
+      {
+         R3Vector y = *(new R3Vector(0,1,0));
+         SFEnemy *enemy = scene->Enemy(i);
         
-        if (enemy->health <= 0)
-        {
+         if (enemy->health <= 0)
+         {
             deletionIndices.push_back(i);
             
             if (!enemy->fixed)
             {
                 //move
-                R3Vector *v = &enemy->movementPath;
-                enemy->node->shape->mesh->Translate(v->X(), v->Y(), v->Z());
-                enemy->node->bbox.Translate(R3Vector(v->X(), v->Y(), v->Z()));
-                enemy->position = enemy->node->shape->mesh->Center();
+               R3Vector *v = &enemy->movementPath;
+               enemy->node->shape->mesh->Translate(v->X(), v->Y(), v->Z());
+               enemy->node->bbox.Translate(R3Vector(v->X(), v->Y(), v->Z()));
+               enemy->position = enemy->node->shape->mesh->Center();
             }
-        }
-        //shoot (will change to a static rate in the future)
-        else 
-        {
+         }
+         //shoot (will change to a static rate in the future)
+         else 
+         {
             if ((int)GetTime() % enemy->firingRate == 0 && (int)RandomNumber() % enemy->firingRate == 0)
             {
-                SFProjectile *proj = new SFProjectile(.3, enemy->node);
-                R3Point arwingPos = ship_pos + shipSpeed * y;
-                R3Point enemyPos = enemy->position;
-                proj->parentNode = enemy->node;
+               SFProjectile *proj = new SFProjectile(.3, enemy->node);
+               R3Point arwingPos = ship_pos + shipSpeed * y;
+               R3Point enemyPos = enemy->position;
+               proj->parentNode = enemy->node;
                 
                 //can change these two lines to node matrix transformation
-                enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
+               enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
                 
                 
                 //    printf("arwing pos %f:%f:%f\n", ship->Center().X(), ship->Center().Y(), ship->Center().Z());
@@ -1377,51 +1374,51 @@ void updateEnemies(void)
                 //  printf("arwing bbox max %f %f %f\n", bbox.Max().X(), bbox.Max().Y(), bbox.Max().Z());
                 //      printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
                 
-                R3Vector projDir = arwingPos - enemyPos;
+               R3Vector projDir = arwingPos - enemyPos;
                 
                 //       printf("difference vect %f:%f:%f\n", projDir.X(), projDir.Y(), projDir.Z());
                 
                 //temporary code for simplification. projectile length = 1
-                projDir.Normalize();
+               projDir.Normalize();
                 
                 //    projDir *= 4;
                 
-                proj->segment = *(new R3Segment(enemyPos, projDir));
+               proj->segment = *(new R3Segment(enemyPos, projDir));
                 
                 //   printf("new proj from %f %f %f   to %f %f %f \n",proj->segment.Start().X(),proj->segment.Start().Y(),proj->segment.Start().Z(),proj->segment.End().X(),proj->segment.End().Y(),proj->segment.End().Z());
                 
-                scene->projectiles.push_back(proj);
+               scene->projectiles.push_back(proj);
                 
                 
                 // Create scene graph node
-                R3Shape *shape = new R3Shape();
-                shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
-                shape->box = NULL;
-                shape->sphere = NULL;
-                shape->cylinder = NULL;
-                shape->cone = NULL;
-                shape->mesh = NULL;
-                shape->segment = &proj->segment;
+               R3Shape *shape = new R3Shape();
+               shape->type = R3_SEGMENT_SHAPE;  //will change to mesh when we change laser shape to mesh
+               shape->box = NULL;
+               shape->sphere = NULL;
+               shape->cylinder = NULL;
+               shape->cone = NULL;
+               shape->mesh = NULL;
+               shape->segment = &proj->segment;
                 
-                R3Node *projNode = new R3Node();
+               R3Node *projNode = new R3Node();
                 //note, this material should be the laser material later
-                projNode->material = enemy->node->material;
-                projNode->shape = shape;
-                projNode->bbox = proj->segment.BBox();
-                projNode->enemy = NULL;
+               projNode->material = enemy->node->material;
+               projNode->shape = shape;
+               projNode->bbox = proj->segment.BBox();
+               projNode->enemy = NULL;
                 
                 //Note: specifically choosing NOT to merge bboxes with the generating enemy
-                enemy->node->children.push_back(projNode);
-                projNode->parent = enemy->node;
+               enemy->node->children.push_back(projNode);
+               projNode->parent = enemy->node;
             }
          }
-    }
+      }
     
     
-    sort (scene->enemies.begin(), scene->enemies.end());
-    for (int i = deletionIndices.size() - 1; i >= 0; i--)
-    {
-        SFEnemy *enemy = scene->Enemy(deletionIndices[i]);
+      sort (scene->enemies.begin(), scene->enemies.end());
+      for (int i = deletionIndices.size() - 1; i >= 0; i--)
+      {
+         SFEnemy *enemy = scene->Enemy(deletionIndices[i]);
         /*for (int j = 0; j < enemy->node->parent->children.size(); j++)
          {
          if (enemy->node->parent->children[j] == enemy->node)
@@ -1431,28 +1428,28 @@ void updateEnemies(void)
          }
          scene->enemies.erase(scene->enemies.begin() + deletionIndices[i]);*/
         
-        enemy->movementPath += R3Vector(0,0,-.0001);
-        smokeSources.push_back(enemy);
+         enemy->movementPath += R3Vector(0,0,-.0001);
+         smokeSources.push_back(enemy);
        // DrawSmoke();
         //printf("should have erased");
-    } 
+      } 
     
-}
+   }
 
 
 //move projectiles, check for intersections
-void updateProjectiles(void)
-{
- 
-    vector<SFProjectile *>::iterator  t = scene->projectiles.begin();
-    while (t != scene->projectiles.end())
-    {       
-      if ((*t)->segment.Start().Y() > ship_pos.Y() + laser_cull_depth
-	  || (*t)->segment.Start().Y() < ship_pos.Y() - cull_behind_cutoff)
+   void updateProjectiles(void)
+   {
+   
+      vector<SFProjectile *>::iterator  t = scene->projectiles.begin();
+      while (t != scene->projectiles.end())
+      {       
+         if ((*t)->segment.Start().Y() > ship_pos.Y() + laser_cull_depth
+         || (*t)->segment.Start().Y() < ship_pos.Y() - cull_behind_cutoff)
          {
             //projectile beyond active area, so delete
-	  scene->projectiles.erase(t);
-	  continue;
+            scene->projectiles.erase(t);
+            continue;
          }
          else
          {
@@ -1464,40 +1461,40 @@ void updateProjectiles(void)
              */ 
             //calcluate for intersection with object on next move
             //ProjectileInter inter = projIntersect(scene->root, proj, scene->root->transformation);
-	  ProjectileInter inter = projIntersect((*t));
+            ProjectileInter inter = projIntersect((*t));
             
             //R3Intersection inter = ComputeIntersection(scene, scene->root, (R3Ray *)&proj->segment.Ray());
             
             if (inter.hit)
             {
                 //decrease healths
-                if (inter.node == scene->arwingNode)
-                {
-                    health -= laserStrength;
-                }
-                else if (inter.node->enemy != NULL)
-                {
-                    inter.node->enemy->health -= laserStrength;
-                    printf("enemy health %d\n",inter.node->enemy->health);
-                }
+               if (inter.node == scene->arwingNode)
+               {
+                  health -= laserStrength;
+               }
+               else if (inter.node->enemy != NULL)
+               {
+                  inter.node->enemy->health -= laserStrength;
+                  printf("enemy health %d\n",inter.node->enemy->health);
+               }
                 
-                scene->projectiles.erase(t);
-		continue;
+               scene->projectiles.erase(t);
+               continue;
             }
             else
             {
                 //move
                 //    printf("projectile endpoint %f:%f:%f\n", proj->segment.End().X(), proj->segment.End().Y(), proj->segment.End().Z());
                 
-	      (*t)->segment.Reset((*t)->segment.Start() + (*t)->speed * (*t)->segment.Vector(), 
-				  (*t)->segment.End() + (*t)->speed * (*t)->segment.Vector());
+               (*t)->segment.Reset((*t)->segment.Start() + (*t)->speed * (*t)->segment.Vector(), 
+                  (*t)->segment.End() + (*t)->speed * (*t)->segment.Vector());
                 
                 //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
             }
-        }
-      t++;
-    }
-}
+         }
+         t++;
+      }
+   }
 
 /* this version needs better checks on which nodes to ignore.
  * the problem is that lasers are intersecting with various
@@ -1558,21 +1555,21 @@ void updateProjectiles(void)
     return best; 
 } */
 
-ProjectileInter projIntersect(SFProjectile *proj)
-{
-    ProjectileInter inter;
-    inter.hit = 0;
-    inter.node = NULL;
-    R3Point pos = proj->segment.End();
+   ProjectileInter projIntersect(SFProjectile *proj)
+   {
+      ProjectileInter inter;
+      inter.hit = 0;
+      inter.node = NULL;
+      R3Point pos = proj->segment.End();
     
-    for (int i = 0; i < scene->NEnemies(); i++)
-    {
-        SFEnemy *enemy = scene->Enemy(i);
-        R3Box box = enemy->node->bbox;
-        box.Transform(enemy->node->cumulativeTransformation);
+      for (int i = 0; i < scene->NEnemies(); i++)
+      {
+         SFEnemy *enemy = scene->Enemy(i);
+         R3Box box = enemy->node->bbox;
+         box.Transform(enemy->node->cumulativeTransformation);
         
-        if (enemy->node != proj->parentNode)
-        {
+         if (enemy->node != proj->parentNode)
+         {
             double xTargetDiff = fabs(box.XMax() - box.XMin());
             double yTargetDiff = fabs(box.YMax() - box.YMin());
             double zTargetDiff = fabs(box.ZMax() - box.ZMin());
@@ -1584,40 +1581,40 @@ ProjectileInter projIntersect(SFProjectile *proj)
                 && fabs(box.ZMax() - pos.Z()) <= zTargetDiff + epsilon
                 && fabs(box.ZMin() - pos.Z()) <= zTargetDiff + epsilon)
             {
-                inter.hit = 1;
-                inter.position = pos;
-                inter.node = enemy->node;
+               inter.hit = 1;
+               inter.position = pos;
+               inter.node = enemy->node;
             }
-        }
-    }
+         }
+      }
     
-    if (scene->arwingNode != proj->parentNode)
-    {
-        R3Box box = scene->arwingNode->bbox;
-        box.Transform(scene->arwingNode->cumulativeTransformation);
+      if (scene->arwingNode != proj->parentNode)
+      {
+         R3Box box = scene->arwingNode->bbox;
+         box.Transform(scene->arwingNode->cumulativeTransformation);
         
-        double xTargetDiff = fabs(box.XMax() - box.XMin());
-        double yTargetDiff = fabs(box.YMax() - box.YMin());
-        double zTargetDiff = fabs(box.ZMax() - box.ZMin());
+         double xTargetDiff = fabs(box.XMax() - box.XMin());
+         double yTargetDiff = fabs(box.YMax() - box.YMin());
+         double zTargetDiff = fabs(box.ZMax() - box.ZMin());
         
-        if (fabs(box.YMax() - pos.Y()) <= yTargetDiff + epsilon
+         if (fabs(box.YMax() - pos.Y()) <= yTargetDiff + epsilon
             && fabs(box.XMax() - pos.X()) <= xTargetDiff + epsilon
             && fabs(box.YMin() - pos.Y()) <= yTargetDiff + epsilon
             && fabs(box.XMin() - pos.X()) <= xTargetDiff + epsilon
             && fabs(box.ZMax() - pos.Z()) <= zTargetDiff + epsilon
             && fabs(box.ZMin() - pos.Z()) <= zTargetDiff + epsilon)
-        {
+         {
             inter.hit = 1;
             inter.position = pos;
             inter.node = scene->arwingNode;
-        }
-    }
-    return inter;
-}
+         }
+      }
+      return inter;
+   }
 
 
-void DrawSmoke(void)
-{
+   void DrawSmoke(void)
+   {
     /*for (unsigned int i = 0; i < smokeSources.size(); i++)
     {
         R3Point p = smokeSources[i]->position;
@@ -1626,13 +1623,13 @@ void DrawSmoke(void)
         //printf("pos %f %f %f\n", p.X(),p.Y(),p.Z());
         //drawParticles(smokeParticles,p.X(),p.Y(),p.Z(),2,2,2,&ship_pos,100,50);
     }*/
-    drawParticles(smokeParticles,0,20,20,2,2,2,&ship_pos,cull_depth,5);
-}
+      drawParticles(smokeParticles,0,20,20,2,2,2,&ship_pos,cull_depth,5);
+   }
 
-void arwingShoot(void)
-{
-    R3Vector toLeftWing = *(new R3Vector(-1.5,-.5,-.5));
-    R3Vector toRightWing = *(new R3Vector(1.5,-.5,-.5));
+   void arwingShoot(void)
+   {
+      R3Vector toLeftWing = *(new R3Vector(-1.5,-.5,-.5));
+      R3Vector toRightWing = *(new R3Vector(1.5,-.5,-.5));
     
       SFProjectile *left = new SFProjectile(.3, scene->arwingNode);
       SFProjectile *right = new SFProjectile(.3, scene->arwingNode);
@@ -1771,7 +1768,7 @@ static void set_up_socket()
     
    #if defined(__APPLE__)
    	//Set up a listening socket
-		if (two_player)
+   	if (two_player)
     		set_up_socket();
    #endif
    	
@@ -1823,9 +1820,9 @@ static void set_up_socket()
       lz = camera.towards.Z();
     // get the ship
     
-    ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
-	tempMatrix = new R3Matrix(scene->Root()->children.at(0)->children.at(0)->transformation);
-
+      ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
+      tempMatrix = new R3Matrix(scene->Root()->children.at(0)->children.at(0)->transformation);
+   
    #if defined(__APPLE__)
     if (two_player)
     {
@@ -1840,11 +1837,11 @@ static void set_up_socket()
             other_ship->shape->mesh = new R3Mesh(*ship);
             other_ship->children = vector<R3Node*>();  
             other_ship->parent = scene->Root();
-				other_ship_matrix_helper = R3identity_matrix;
-				other_ship_matrix_helper.Translate(R3Vector(0,-18,11));
-				other_ship_matrix_helper.Rotate(0, 1.27);
+   			other_ship_matrix_helper = R3identity_matrix;
+   			other_ship_matrix_helper.Translate(R3Vector(0,-18,11));
+   			other_ship_matrix_helper.Rotate(0, 1.27);
             other_ship->transformation = other_ship_matrix_helper * (*tempMatrix);
-				//other_ship->transformation.Translate(R3Vector(0,0,0));
+   			//other_ship->transformation.Translate(R3Vector(0,0,0));
             other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
             other_ship->material = NULL;
             other_ship->enemy = new SFEnemy();
@@ -1862,27 +1859,27 @@ static void set_up_socket()
             other_ship->shape->mesh = new R3Mesh(*ship);
             other_ship->children = vector<R3Node*>();  
             other_ship->parent = scene->Root();
-				other_ship_matrix_helper = R3identity_matrix;
-				other_ship_matrix_helper.Translate(R3Vector(0,-18,9));
-				other_ship_matrix_helper.Rotate(0, 1.27);
+   			other_ship_matrix_helper = R3identity_matrix;
+   			other_ship_matrix_helper.Translate(R3Vector(0,-18,9));
+   			other_ship_matrix_helper.Rotate(0, 1.27);
             other_ship->transformation = other_ship_matrix_helper * (*tempMatrix);
-				//other_ship->transformation.Translate(R3Vector(0,0,0));
+   			//other_ship->transformation.Translate(R3Vector(0,0,0));
             other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
             other_ship->material = NULL;
             other_ship->enemy = new SFEnemy();
             
-				ship->Translate(0, 2, 0);
-				
+   			ship->Translate(0, 2, 0);
+   			
             scene->Root()->children.push_back(other_ship);
         }
         
-      	net_info.xp = 0;
-      	net_info.yp = 0;
-      	net_info.zp = 0;
+      	net_info.xp = other_ship->transformation[0][3];
+      	net_info.yp = other_ship->transformation[1][3];
+      	net_info.zp = other_ship->transformation[2][3];
       	
-      	my_info.xp = 0;
-      	my_info.yp = 0;
-        	my_info.zp = 0;
+      	my_info.xp = (*tempMatrix)[0][3];
+      	my_info.yp = (*tempMatrix)[1][3];
+        	my_info.zp = (*tempMatrix)[2][3];
       	
     }
    #endif
@@ -1909,10 +1906,10 @@ static void set_up_socket()
     //YOU MUST APPLY THE TRANSFORMATION TO THE POINT FIRST.	
     //cout << (transformation * node->bbox.Centroid()).X() << endl;
     
-    if (node->enemy != NULL || node == scene->arwingNode)
-    {
-        node->cumulativeTransformation *= transformation;
-    }
+      if (node->enemy != NULL || node == scene->arwingNode)
+      {
+         node->cumulativeTransformation *= transformation;
+      }
     
       for (int i = 0; i < (int) node->children.size(); i++) 
       {
@@ -2020,7 +2017,7 @@ static void set_up_socket()
       if(!scene) exit(-1);
     
     
-
+   
       for (unsigned int i = 0; i < scene->root->children.size(); i++)
          printf("root child %d: %d\n", i,scene->root->children[i]);
     
