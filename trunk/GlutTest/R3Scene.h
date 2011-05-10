@@ -81,7 +81,8 @@ struct R3Node {
     vector<struct R3Node *> children;
     R3Shape *shape;
     R3Matrix transformation;
-    R3Matrix cumulativeTransformation; //transformation including those of this node's parents; needed just for nodes with enemies
+    R3Matrix cumulativeTransformation; 
+    // transformation including those of this node's parents; needed just for nodes with enemies
     R3Material *material;
     R3Box bbox;
     SFEnemy *enemy;
