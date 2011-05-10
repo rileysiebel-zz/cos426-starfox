@@ -24,7 +24,7 @@ static const char *input_scene_name = "../art/level1.scn";
 #define NPACK 10
 #define SRV_PORT 9930
 #define CLI_PORT 9999
-#define SRV_IP "140.180.21.157"
+#define SRV_IP "140.180.21.57"
 #define CLI_IP "140.180.29.64"
 
 pthread_t thr;
@@ -747,10 +747,12 @@ static void* receive_data(void *threadid)
 {
     while(1)
     {
+	 	cout << "trying..." << rand()<< endl;
       	//cout <<"receiving" << endl;
         if (recvfrom(sock_in, &net_info, sizeof(info_to_send), 0, 
                      (struct sockaddr*)&si_other, &slen)==-1)
             diep("recvfrom()");
+		  cout << "RECEIVED DATA!!" << rand()<< endl;
     }
     pthread_exit(NULL);
 }
@@ -1527,7 +1529,7 @@ ProjectileInter projIntersect(R3Node *node, SFProjectile *proj, R3Matrix transfo
     //destroyed
     // if (node != proj->parentNode)// && (node->enemy != NULL || node == scene->arwingNode))
     {
-        for (int i = 0; i < node->children.size(); i++)
+        for (unsigned int i = 0; i < node->children.size(); i++)
         {
             inter = projIntersect(node->children[i], proj, transformation);
             
