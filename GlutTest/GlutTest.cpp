@@ -1453,16 +1453,16 @@ void updateEnemies(void)
 //move projectiles, check for intersections
 void updateProjectiles(void)
 {
-    vector<int> deletionIndices;
-    for (int i = 0; i < scene->NProjectiles(); i++)
-    {
-        SFProjectile *proj = scene->Projectile(i);
-        
-        if (proj->segment.Start().Y() > ship_pos.Y() + laser_cull_depth
-            || proj->segment.Start().Y() < ship_pos.Y() - cull_behind_cutoff)
+ 
+    vector<SFProjectile *>::iterator  t = scene->projectiles.begin();
+    while (t != scene->projectiles.end())
+    {       
+      if ((*t)->segment.Start().Y() > ship_pos.Y() + laser_cull_depth
+	  || (*t)->segment.Start().Y() < ship_pos.Y() - cull_behind_cutoff)
         {
             //projectile beyond active area, so delete
-            deletionIndices.push_back(i);
+	  scene->projectiles.erase(t);
+	  continue;
         }
         else
         {
@@ -1474,7 +1474,7 @@ void updateProjectiles(void)
              */ 
             //calcluate for intersection with object on next move
             //ProjectileInter inter = projIntersect(scene->root, proj, scene->root->transformation);
-            ProjectileInter inter = projIntersect(proj);
+	  ProjectileInter inter = projIntersect((*t));
             
             //R3Intersection inter = ComputeIntersection(scene, scene->root, (R3Ray *)&proj->segment.Ray());
             
@@ -1491,26 +1491,20 @@ void updateProjectiles(void)
                     printf("enemy health %d\n",inter.node->enemy->health);
                 }
                 
-                //delete projectile
-                deletionIndices.push_back(i);
+                scene->projectiles.erase(t);
+		continue;
             }
             else
             {
                 //move
                 //    printf("projectile endpoint %f:%f:%f\n", proj->segment.End().X(), proj->segment.End().Y(), proj->segment.End().Z());
                 
-                proj->segment.Reset(proj->segment.Start() + proj->speed * proj->segment.Vector(), 
-                                    proj->segment.End() + proj->speed * proj->segment.Vector());
+	      (*t)->segment.Reset((*t)->segment.Start() + (*t)->speed * (*t)->segment.Vector(), 
+				  (*t)->segment.End() + (*t)->speed * (*t)->segment.Vector());
                 
                 //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
             }
         }
-        sort (scene->projectiles.begin(), scene->projectiles.end());
-        for (int i = deletionIndices.size() - 1; i >= 0; i--)
-        {
-            //   delete scene->Projectile(deletionIndices[i]);
-            scene->projectiles.erase(scene->projectiles.begin() + deletionIndices[i]);
-        } 
     }
 }
 
