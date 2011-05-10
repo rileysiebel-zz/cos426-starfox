@@ -6,31 +6,11 @@ material
  0 0 0 
  0 1 ../GlutTest/images/grass.bmp
 
-material
- 1 1 1
- 0.5 0.5 0.5
- 0.5 0.5 0.5
- 0 0 0
- 0 0 0
- 0 1 ../GlutTest/images/brick.bmp
-
-#floor
 box
  0
  -50 0 -1
  50 150 1
 
-#walls
-box 1
--51 0 -1
--50 150 30
-
-box 1
-50 0 -1
-51 150 30
-
-
-#city
 begin
  -1
  1 0 0 0
@@ -43,7 +23,7 @@ end
 begin
   -1
   1 0 0 -15 
-  0 1 0 40
+  0 1 0 30
   0 0 1 1
   0 0 0 1
   include T-building.scn
@@ -52,43 +32,16 @@ end
 begin
   -1
   1 0 0 25 
-  0 1 0 23
+  0 1 0 20
   0 0 1 1
   0 0 0 1
-  include tall-building.scn
+  include T-building.scn
 end
 
 begin
   -1
-  1 0 0 5 
+  1 0 0 7 
   0 1 0 35
-  0 0 1 1
-  0 0 0 1
-  include T-building.scn
-end
-
-begin
-  -1
-  1 0 0 -25 
-  0 1 0 24
-  0 0 1 1
-  0 0 0 1
-  include tall-building.scn
-end
-
-begin
-  -1
-  1 0 0 -25 
-  0 1 0 60
-  0 0 1 1
-  0 0 0 1
-  include T-building.scn
-end
-
-begin
-  -1
-  1 0 0 35 
-  0 1 0 38
   0 0 1 1
   0 0 0 1
   include N-building.scn
@@ -97,7 +50,7 @@ end
 begin
  -1
  1 0 0 -15
- 0 1 0 48
+ 0 1 0 40 
  0 0 1 1
  0 0 0 1
  include N-building.scn
@@ -105,36 +58,30 @@ end
 
 begin
  -1
- 1 0 0 -5
- 0 1 0 59
+ 1 0 0 -10
+ 0 1 0 50
  0 0 1 0 
  0 0 0 1
- include tall-building.scn
+ include building.scn
 end
 
 begin
  -1
- 1 0 0 0
- 0 1 0 62
+ 1 0 0 -5
+ 0 1 0 50
  0 0 1 0 
  0 0 0 1
- include tall-building.scn
+ include building.scn
 end
 
-begin 
- -1
- 1 0 0 -30
- 0 1 0 8 
- 0 0 0.5 0
- 0 0 0 1
- include tall-building.scn
+begin -1
+.1 0 0 0
+0 .1 0 0
+0 0 .1 2
+0 0 0 1
+enemy 1 -1 turret.off
+0 0 0
+10
 end
 
-begin 
- -1
- 1 0 0 20
- 0 1 0 60
- 0 0 1 0
- 0 0 0 1
- include T-building.scn
-end
+

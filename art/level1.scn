@@ -12,20 +12,20 @@ end
 #point_light 1 1 1 0 50 20 0 0 0
 
 ambient 1 1 1
-#include first_ocean.scn
+include first_ocean.scn
 
-#begin -1
-#  1 0 0 0
-#  0 1 0 110
-#  0 0 1 0
-#  0 0 0 1
-#  include canyon.scn
-#end
+begin -1
+  1 0 0 0
+  0 1 0 110
+  0 0 1 0
+  0 0 0 1
+  include canyon.scn
+end
 
-#begin -1
-# 1 0 0 0 
-# 0 1 0 210 
-# 0 0 1 0 
-# 0 0 0 1
+begin -1
+ 1 0 0 0 
+ 0 1 0 210 
+ 0 0 1 0 
+ 0 0 0 1
  include Corneria_City.scn
-#end
+end
