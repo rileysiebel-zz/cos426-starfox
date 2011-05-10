@@ -1388,6 +1388,10 @@ static void* receive_data(void *threadid)
 						cout << "arwing: " <<endl;
 						cout << arwingPos.X() << " " << arwingPos.Y() << " " << arwingPos.Z() << endl;
                   R3Point enemyPos = enemy->position;
+		  printf("Enemy: %f, $f, $f\nArwing: %f, %f, %f\nShip: %f, %f, %f\n\n", 
+			 enemyPos.X(), enemyPos.Y(), enemyPos.Z(), 
+			 arwingPos.X(), arwingPos.Y(), arwingPos.Z(),
+			 ship_pos.X(), ship_pos.Y(), ship_pos.Z());
                   proj->parentNode = enemy->node;
                     
                     //can change these two lines to node matrix transformation
