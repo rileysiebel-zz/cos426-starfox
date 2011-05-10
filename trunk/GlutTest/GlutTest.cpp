@@ -1484,19 +1484,8 @@ void updateEnemies(void)
     for (int i = deletionIndices.size() - 1; i >= 0; i--)
     {
         SFEnemy *enemy = scene->Enemy(deletionIndices[i]);
-        /*for (int j = 0; j < enemy->node->parent->children.size(); j++)
-         {
-         if (enemy->node->parent->children[j] == enemy->node)
-         {
-         enemy->node->parent->children.erase(enemy->node->parent->children.begin() + j);
-         }
-         }
-         scene->enemies.erase(scene->enemies.begin() + deletionIndices[i]);*/
         
         enemy->movementPath += R3Vector(0,0,-.0001);
-        // smokeSources.push_back(enemy);
-        // DrawSmoke();
-        //printf("should have erased");
     } 
     
 }

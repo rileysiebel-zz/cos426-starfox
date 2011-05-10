@@ -53,7 +53,7 @@ endif
 
 LIBS=jpeg/libjpeg.a R3/libR3.a R2/libR2.a
 
-all: meshview
+all: starfox
 
 R3/libR3.a: 
 	    $(MAKE) -C R3
@@ -64,12 +64,12 @@ R2/libR2.a:
 jpeg/libjpeg.a: 
 	    $(MAKE) -C jpeg
 
-meshview: $(LIBS) $(MESHVIEW_OBJS)
+starfox: $(LIBS) $(MESHVIEW_OBJS)
 	rm -f $@
 	$(CXX) $(CXXFLAGS) $^ -lm -o $@ $(LIBS) $(GLLIBS)
 
 clean: 
-	rm -f *.o meshpro meshview
+	rm -f *.o meshpro starfox
 	$(MAKE) -C R3 clean
 	$(MAKE) -C R2 clean
 	$(MAKE) -C jpeg clean
