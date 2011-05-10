@@ -44,15 +44,16 @@ health(10)
 {
 }
 
-SFEnemy::SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity, int health)
+SFEnemy::SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity, int health, float particle_velocity, int firing_rate)
 : fixed(fix),
-firingRate(rand() % 10 + 1),
+firingRate(firing_rate + 1),
 movementPath(initialVelocity),
 projectileLength(1),
-projectileSpeed(.1),
+projectileSpeed(particle_velocity),
 projectileSource(mesh->Center()),
 mesh(mesh),
 health(health)
+
 {
 }
 
@@ -507,7 +508,9 @@ Read(const char *filename, R3Node *node)
             float vx, vy, vz;
             int h;
             char meshname[256];
-            if (fscanf(fp, "%d%d%s%f%f%f%d", &fixed, &m, meshname, &vx, &vy, &vz, &h) != 7) {
+				float particle_velocity;
+				int firing_rate;
+            if (fscanf(fp, "%d%d%s%f%f%f%d%f%d", &fixed, &m, meshname, &vx, &vy, &vz, &h,&particle_velocity, &firing_rate) != 9) {
                 fprintf(stderr, "Unable to parse enemy command %d in file %s\n", command_number, filename);
                 return 0;
             }
@@ -565,7 +568,7 @@ Read(const char *filename, R3Node *node)
             node->material = material;
             node->shape = shape;
             node->bbox = mesh->bbox;
-            node->enemy = new SFEnemy(fixed, mesh, *initialVelocity, h);
+            node->enemy = new SFEnemy(fixed, mesh, *initialVelocity, h, particle_velocity, firing_rate);
             
             node->enemy->position = shape->mesh->Center();
             node->enemy->projectileSource = shape->mesh->Center();
