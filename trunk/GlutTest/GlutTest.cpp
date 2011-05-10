@@ -3,7 +3,6 @@
 #include "R3Scene.h"
 #include "smoke.h"
 #include "imageloader.h"
-//#include "raytrace.h"
 
 using namespace std;
 
@@ -118,7 +117,7 @@ bool right_intersection = false;
 bool top_intersection = false;
 bool bottom_intersection = false;
 
-ProjectileInter projIntersect(R3Node *node, SFProjectile *proj);
+ProjectileInter projIntersect(R3Node *node, SFProjectile *proj, R3Matrix transformation);
 //R3Intersection projIntersect(R3Node *node, SFProjectile *proj);
 
 R3Point ship_pos = R3Point(0,0,0);
@@ -128,8 +127,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.31;
-double shipSpeed = 0.31;
+double cameraSpeed = 0.0;
+double shipSpeed = 0.0;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -1218,7 +1217,7 @@ void updateShip() {
     if (front_intersection)
         z_move = 0;
     ship->Translate(x_move, y_move, z_move);
-    //ship->bbox.Translate(R3Vector(x_move, y_move, z_move));
+    scene->arwingNode->bbox.Translate(R3Vector(x_move, y_move, z_move));
 }
 
 //Awais
@@ -1333,17 +1332,21 @@ void updateEnemies(void)
         }
         
         //shoot (will change to a static rate in the future)
-        if ((int)GetTime() % 4 == 0 && (int)RandomNumber() % 4 == 0)
+        if ((int)GetTime() % 7 == 0 && (int)RandomNumber() % 7 == 0)
         {
-            SFProjectile *proj = new SFProjectile(.1, enemy->node);
+            SFProjectile *proj = new SFProjectile(.3, enemy->node);
             R3Point arwingPos = ship_pos + shipSpeed * y;//ship->Center();
             R3Point enemyPos = enemy->position;//enemy->projectileSource;
             proj->parentNode = enemy->node;
             
             enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
             
-            //    printf("arwing pos %f:%f:%f\n", ship_pos.X(), ship_pos.Y(), ship_pos.Z());
+                printf("arwing pos %f:%f:%f\n", ship->Center().X(), ship->Center().Y(), ship->Center().Z());
             
+       /*     R3Box bbox = scene->arwingNode->bbox;
+            printf("arwing bbox min %f %f %f\n", bbox.XMin(), bbox.YMin(), bbox.ZMin());
+            printf("arwing bbox max %f %f %f\n", bbox.XMax(), bbox.YMax(), bbox.ZMax());*/
+          //  printf("arwing bbox max %f %f %f\n", bbox.Max().X(), bbox.Max().Y(), bbox.Max().Z());
             //      printf("enemy pos %f:%f:%f\n", enemyPos.X(), enemyPos.Y(), enemyPos.Z());
             
             R3Vector projDir = arwingPos - enemyPos;
@@ -1410,13 +1413,13 @@ void updateProjectiles(void)
              printf("arwing %d\n", scene->arwingNode); 
              */ 
             //calcluate for intersection with object on next move
-            ProjectileInter inter = projIntersect(scene->root, proj);
+            ProjectileInter inter = projIntersect(scene->root, proj, scene->root->transformation);
             
             //R3Intersection inter = ComputeIntersection(scene, scene->root, (R3Ray *)&proj->segment.Ray());
             
             if (inter.hit)
             {
-               // printf("hit node %d     ", inter.node);
+            //    printf("hit node %d     ", inter.node);
             }
             else
             {
@@ -1497,15 +1500,25 @@ void updateProjectiles(void)
  * the problem is that lasers are intersecting with various
  * scene bboxes - basically where nothing actually is, but where
  * it is contaiend within the scene */
-ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
+ProjectileInter projIntersect(R3Node *node, SFProjectile *proj, R3Matrix transformation)
 {
+    // Push transformation onto stack
+    glPushMatrix();
+    LoadMatrix(&node->transformation);
+    //Update the transformation
+    transformation *= node->transformation;
+    
     R3Point pos = proj->segment.End();
     R3Box box = node->bbox;
     ProjectileInter inter;
     ProjectileInter best; 
     
-    //pos.Transform(node->transformation);
+    //printf("bbox min before %f %f %f\n", box.XMin(), box.YMin(), box.ZMin());
     
+    //pos.Transform(transformation);
+    box.Transform(transformation);
+    
+   // printf("bbox min after %f %f %f\n", box.XMin(), box.YMin(), box.ZMin());
     
     best.node = scene->root;
     best.hit = 0;
@@ -1516,7 +1529,7 @@ ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
     {
         for (int i = 0; i < node->children.size(); i++)
         {
-            inter = projIntersect(node->children[i], proj);
+            inter = projIntersect(node->children[i], proj, transformation);
             
             if (inter.hit)
             {
@@ -1526,16 +1539,16 @@ ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
             }
             else
             {
-                best.hit = 0;
-                best.node = scene->root;
+           //     best.hit = 0;
+           //     best.node = scene->root;
             }
         }
         
-        if /*(node->enemy != NULL || */(node == scene->arwingNode)
+        if (/*node->enemy != NULL || */node == scene->arwingNode)
         {
-            printf("pos %f %f %f\n", pos.X(), pos.Y(), pos.Z());
+         //   printf("pos %f %f %f\n", pos.X(), pos.Y(), pos.Z());
             
-            printf("arwing center %f %f %f\n", box.Centroid().X(), box.Centroid().Y(), box.Centroid().Z());
+         //   printf("arwing center %f %f %f\n", box.Centroid().X(), box.Centroid().Y(), box.Centroid().Z());
             
             double xTargetDiff = fabs(box.XMax() - box.XMin());
             double yTargetDiff = fabs(box.YMax() - box.YMin());
@@ -1551,10 +1564,13 @@ ProjectileInter projIntersect(R3Node *node, SFProjectile *proj)
                 best.hit = 1;
                 best.position = pos;
                 best.node = node;
-                printf("intersect with %d\n", node);
+            //    printf("intersect with %d\n", node);
             }
         }
     } 
+    
+    // Restore previous transformation
+    glPopMatrix();
     
     return best; 
 } 
