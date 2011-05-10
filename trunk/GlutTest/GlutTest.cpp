@@ -1544,7 +1544,7 @@ static void* receive_data(void *threadid)
                else if (inter.node->enemy != NULL)
                {
                   inter.node->enemy->health -= 5;
-                  printf("enemy health %d\n",inter.node->enemy->health);
+                  //printf("enemy health %d\n",inter.node->enemy->health);
                }
                 
                 //delete projectile
@@ -1600,7 +1600,7 @@ static void* receive_data(void *threadid)
                inter.hit = 1;
                inter.position = pos;
                inter.node = enemy->node;
-               printf("intered");
+               //printf("intered");
             }
          }
       }
