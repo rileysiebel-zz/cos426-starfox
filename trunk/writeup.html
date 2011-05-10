@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<TITLE>
+COS 426 Project
+</TITLE>
+<BODY>
+<CENTER>
+<H2>
+COS 426, Spring 2011<BR>
+Names: Riley, Nader, Kevin, Awais Tariq<BR>           <!-- Fill in your name and login -->
+Netids: Riley, Nader, Kevin, atariq<BR>           <!-- Fill in your name and login -->
+</H2>                     
+</CENTER>
+<HR><BR>
+
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H1>List of Implemented Features </H1>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+I believe that I have implemented the following features:
+<H2> Required Functionality </H2>
+
+<H3> 3D Perspective Viewing and objects </H3>
+<UL>
+  <LI> View Changes </LI>
+  Use F3 to change view from inside(third-person view) to outside(cockpit view) of the ship and vicevera.
+  <LI> Smooth Transitions </LI>
+  The up/down/left/right movements allow for realistic movements by rotating the ship in the correct positon while its turning. Also while we are in the cockpit view the camera viewpoint changes as we turn.
+  <LI> Clipping & hidden surface removal </LI>
+  We make sure to clip any scene outside a particular view field for computational accelaration. 
+<TABLE cellSpacing=0 cellPadding=10 border=0>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/fourspheres.jpg"><IMG width=256 src="output/fourspheres.jpg"></A><BR>       
+       <A href="input/fourspheres.scn">fourspheres.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/sixtriangles.jpg"><IMG width=256 src="output/sixtriangles.jpg"></A><BR>       
+       <A href="input/sixtriangles.scn">sixtriangles.scn</A>
+    </TD>
+  </TR>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/mixedprimitives1.jpg"><IMG width=256 src="output/mixedprimitives1.jpg"></A><BR>       
+       <A href="input/mixedprimitives1.scn">mixedprimitives1.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/mixedprimitives2.jpg"><IMG width=256 src="output/mixedprimitives2.jpg"></A><BR>       
+       <A href="input/mixedprimitives2.scn">mixedprimitives2.scn</A>
+    </TD>
+  </TR>
+  <TR>
+    <TD vAlign=top align=middle colspan="3">
+      Comments about implementations, interesting features, problems, etc.
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+</UL>
+
+<H3> Lighting and Smooth Shading </H3>
+<UL>
+  <LI> OpenGL lighting and shading model </LI>
+</UL>
+
+<H3> User Input </H3>
+<UL>
+  <LI> Keyboard </LI>
+  We use keyboard as the input device for movement/view changes/pausing etc.
+</UL>
+
+<H3> Computer Control over some elements of the scene </H3>
+<UL>
+  <LI> Enemies </LI>
+</UL>
+<HR><BR>
+
+
+<H2> Advanced Features </H2>
+
+<H3> Texture Mapping </H3>
+<UL>
+  <LI> Texture Images using OpenGL </LI>
+<TABLE cellSpacing=0 cellPadding=10 border=0>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/fourspheres.jpg"><IMG width=256 src="output/fourspheres.jpg"></A><BR>       
+       <A href="input/fourspheres.scn">fourspheres.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/sixtriangles.jpg"><IMG width=256 src="output/sixtriangles.jpg"></A><BR>       
+       <A href="input/sixtriangles.scn">sixtriangles.scn</A>
+    </TD>
+  </TR>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/mixedprimitives1.jpg"><IMG width=256 src="output/mixedprimitives1.jpg"></A><BR>       
+       <A href="input/mixedprimitives1.scn">mixedprimitives1.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/mixedprimitives2.jpg"><IMG width=256 src="output/mixedprimitives2.jpg"></A><BR>       
+       <A href="input/mixedprimitives2.scn">mixedprimitives2.scn</A>
+    </TD>
+  </TR>
+  <TR>
+    <TD vAlign=top align=middle colspan="3">
+      Comments about implementations, interesting features, problems, etc.
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+</UL>
+
+<H3> Multiple Views </H3>
+<UL>
+  <LI> Front and Rear View </LI>
+  The screen is split into two parts with the lower part giving the front view and the upper part giving the rear view.
+</UL>
+
+<H3> On-screen Control Panel </H3>
+<UL>
+  <LI> Altitude and Health display </LI>
+  The on screen control panel is simple and consists of altitude and health. Orthographic Projection was used for displaying text.
+</UL>
+
+
+<H3> View Frustrum Culling </H3>
+<UL>
+  <LI> Bounding Box Volumes </LI>
+</UL>
+
+<H3> Procedural and Physically based modelling </H3>
+<UL>
+  <LI> Smoke using a particle engine </LI>
+  Particle engines were used to create particle systems like smoke and fire.
+</UL>
+
+<H3> Collision detection </H3>
+<UL>
+  <LI> Checking Bounding Volumes </LI>
+</UL>
+
+<H3> Networked Multiplayer cabability </H3>
+<UL>
+  <LI> Collaborative Play </LI>
+</UL>
+<HR><BR>
+
+
+
+
+
+
+
+</BODY>
+</HTML>
