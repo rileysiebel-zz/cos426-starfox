@@ -1862,10 +1862,17 @@ static void set_up_socket()
             other_ship->shape->mesh = new R3Mesh(*ship);
             other_ship->children = vector<R3Node*>();  
             other_ship->parent = scene->Root();
-            other_ship->transformation = other_ship_matrix_helper;
+				other_ship_matrix_helper = R3identity_matrix;
+				other_ship_matrix_helper.Translate(R3Vector(0,-18,9));
+				other_ship_matrix_helper.Rotate(0, 1.27);
+            other_ship->transformation = other_ship_matrix_helper * (*tempMatrix);
+				//other_ship->transformation.Translate(R3Vector(0,0,0));
+            other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
             other_ship->material = NULL;
             other_ship->enemy = new SFEnemy();
             
+				ship->Translate(0, 2, 0);
+				
             scene->Root()->children.push_back(other_ship);
         }
         
