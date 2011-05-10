@@ -68,7 +68,7 @@ static int GLUTwindow_width = 800;
 
 double epsilon = 0.02;
 double collision_epsilon = .1;
-double cull_depth = 100;
+double cull_depth = 1000;
 double cull_behind_cutoff = 50;
 
 // this is Arwing
@@ -127,8 +127,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.0;
-double shipSpeed = 0.0;
+double cameraSpeed = 0.01;
+double shipSpeed = 0.01;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
