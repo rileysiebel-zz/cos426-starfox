@@ -1642,14 +1642,14 @@ static void* receive_data(void *threadid)
 
    void DrawSmoke(void)
    {
-    for (unsigned int i = 0; i < smokeSources.size(); i++)
+    /*for (unsigned int i = 0; i < smokeSources.size(); i++)
      {
      R3Point p = smokeSources[i]->position;
      p.Transform(smokeSources[i]->node->cumulativeTransformation);
      
      //printf("pos %f %f %f\n", p.X(),p.Y(),p.Z());
      drawParticles(smokeParticles,p.X(),p.Y(),p.Z(),2,2,2,&ship_pos,100,50);
-     }
+     }*/
       //drawParticles(smokeParticles,0,20,20,2,2,2,&ship_pos,cull_depth,5);
    }
 
