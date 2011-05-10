@@ -138,8 +138,8 @@ static struct info_to_send my_info;
    double rotationStep = 0.01;
 
 // speed variables
-   double cameraSpeed = .01;
-   double shipSpeed = .01;
+   double cameraSpeed = .1;
+   double shipSpeed = .1;
 
 // mutilple views
    enum view {INSIDE, OUTSIDE};
@@ -476,7 +476,7 @@ static struct info_to_send my_info;
          ship_pos = t;
          trans = transformation;
          DrawShape(node->shape);
-        
+        	
         // setting the wings points
          shipLeftWing = transformation * node->shape->mesh->Face(33)->vertices.at(0)->position;
          shipRightWing = transformation * node->shape->mesh->Face(73)->vertices.at(0)->position;
@@ -882,6 +882,11 @@ static void* receive_data(void *threadid)
         
          DrawScene(scene);
         
+		  cout << "ship_pos" << endl;
+		  	cout << ship_pos.X() << endl;
+			cout << ship_pos.Y() << endl;
+			cout << ship_pos.Z() << endl;
+		  
          DrawProjectiles(scene);
         
         
@@ -1353,7 +1358,7 @@ static void* receive_data(void *threadid)
     
       for (int i = 0; i < scene->NEnemies(); i++)
       {
-         R3Vector y = *(new R3Vector(0,1,0));
+         R3Vector yyy = *(new R3Vector(0,1,0));
          SFEnemy *enemy = scene->Enemy(i);
         
          if (enemy->position.Y() - cull_depth <= ship_pos.Y())
@@ -1377,7 +1382,7 @@ static void* receive_data(void *threadid)
                if ((int)GetTime() % enemy->firingRate == 0 && (int)RandomNumber() % enemy->firingRate == 0)
                {
                   SFProjectile *proj = new SFProjectile(.3, enemy->node);
-                  R3Point arwingPos = ship_pos + shipSpeed * y;
+                  R3Point arwingPos = ship_pos + shipSpeed * yyy;
                   R3Point enemyPos = enemy->position;
                   proj->parentNode = enemy->node;
                     
