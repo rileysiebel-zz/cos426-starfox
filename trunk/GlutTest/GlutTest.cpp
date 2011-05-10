@@ -24,8 +24,8 @@ static const char *input_scene_name = "../art/level1.scn";
 #define NPACK 10
 #define SRV_PORT 9930
 #define CLI_PORT 9999
-#define SRV_IP "0.0.0.0"
-#define CLI_IP "0.0.0.0"
+#define SRV_IP "140.180.21.157"
+#define CLI_IP "140.180.29.64"
 
 pthread_t thr;
 
