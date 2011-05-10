@@ -882,10 +882,10 @@ static void* receive_data(void *threadid)
         
          DrawScene(scene);
         
-		  cout << "ship_pos" << endl;
-		  	cout << ship_pos.X() << endl;
-			cout << ship_pos.Y() << endl;
-			cout << ship_pos.Z() << endl;
+		  //cout << "ship_pos" << endl;
+		  	//cout << ship_pos.X() << endl;
+			//cout << ship_pos.Y() << endl;
+			//cout << ship_pos.Z() << endl;
 		  
          DrawProjectiles(scene);
         
@@ -1382,7 +1382,11 @@ static void* receive_data(void *threadid)
                if ((int)GetTime() % enemy->firingRate == 0 && (int)RandomNumber() % enemy->firingRate == 0)
                {
                   SFProjectile *proj = new SFProjectile(.3, enemy->node);
+						cout << "SHIP_POS" << endl;
+						cout << ship_pos.X() << " " << ship_pos.Y() << " " << ship_pos.Z() << endl;
                   R3Point arwingPos = ship_pos + shipSpeed * yyy;
+						cout << "arwing: " <<endl;
+						cout << arwingPos.X() << " " << arwingPos.Y() << " " << arwingPos.Z() << endl;
                   R3Point enemyPos = enemy->position;
                   proj->parentNode = enemy->node;
                     
