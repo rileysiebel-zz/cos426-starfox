@@ -129,8 +129,8 @@ double rotationAngle = 0.0;
 double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.1;
-double shipSpeed = 0.1;
+double cameraSpeed = 0.00;
+double shipSpeed = 0.00;
 
 // mutilple views
 enum view {INSIDE, OUTSIDE};
@@ -941,8 +941,14 @@ void GLUTRedraw(void) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_DEPTH_TEST);
 		// draw smoke
-		drawParticles(smokeParticles,0,20,20,2,2,2,&ship_pos,cull_depth,5);
-        
+		//vector<R3Point> *abc = new vector<R3Point>;
+		//abc->push_back(R3Point(0,10,20));
+		//abc->push_back(R3Point(0,10,20));
+
+		//for (int i = 0; i < abc->size(); i++) {
+		//	drawParticles(smokeParticles,0,50,20,2,2,2,&ship_pos,500,5);
+		//}
+
 		glutSwapBuffers();
 		glFlush();
 	}
@@ -1034,6 +1040,16 @@ void GLUTSpecial(int key, int xx, int yy) {
                 currView = INSIDE;
             }
             break;
+		case GLUT_KEY_F4:
+			if (cameraSpeed == 0.00 && shipSpeed == 0.00) {
+				cameraSpeed = 0.01;
+				shipSpeed = 0.01;
+			}
+			else {
+				cameraSpeed = 0.00;
+				shipSpeed = 0.00;
+			}
+			break;
     }
 }
 
