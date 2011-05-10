@@ -20,6 +20,7 @@
 #include <sys/select.h>    
 #include <float.h>
 
+#define PI 3.14159265358979323846264338327950288419716
 #define BUFLEN 512
 #define NPACK 10
 static uint16_t SRV_PORT = 5000;
@@ -76,7 +77,7 @@ static struct info_to_send my_info;
 
    double epsilon = 0.02;
    double collision_epsilon = .1;
-   double cull_depth = 1000;
+   double cull_depth = 200;
    double laser_cull_depth = 100;
    double cull_behind_cutoff = 50;
 
@@ -137,8 +138,8 @@ static struct info_to_send my_info;
    double rotationStep = 0.01;
 
 // speed variables
-   double cameraSpeed = 0.00;
-   double shipSpeed = 0.00;
+   double cameraSpeed = 0.0;
+   double shipSpeed = 0.0;
 
 // mutilple views
    enum view {INSIDE, OUTSIDE};
@@ -616,8 +617,8 @@ static struct info_to_send my_info;
     // Draw shape
       if (node->shape) 
       {
-         if (!(box_center.Y() + edge_length < y)
-            &&  !(box_center.Y() - edge_length > y + cull_depth))
+         if (!(box_center.Y() + edge_length < (y - cull_depth/2))
+            &&  !(box_center.Y() - edge_length > (y + cull_depth)))
          {
             DrawShape(node->shape); 
          }
@@ -759,12 +760,10 @@ static void* receive_data(void *threadid)
 {
     while(1)
     {
-	 	cout << "trying..." << rand()<< endl;
       	//cout <<"receiving" << endl;
 		  if (recvfrom(s_in, &net_info, sizeof(info_to_send), 0, 
 		  				(struct sockaddr*)&si_other, &slen)==-1)
                   diep("recvfrom()");
-        cout << "RECEIVED DATA!!" << rand()<< endl;
     }
     pthread_exit(NULL);
 }
@@ -1029,8 +1028,8 @@ static void* receive_data(void *threadid)
             break;
          case GLUT_KEY_F4:
             if (cameraSpeed == 0.00 && shipSpeed == 0.00) {
-               cameraSpeed = 0.51;
-               shipSpeed = 0.51;
+               cameraSpeed = 0.1;
+               shipSpeed = 0.1;
             }
             else {
                cameraSpeed = 0.00;
@@ -1839,7 +1838,7 @@ static void set_up_socket()
             other_ship->parent = scene->Root();
    			other_ship_matrix_helper = R3identity_matrix;
    			other_ship_matrix_helper.Translate(R3Vector(0,-18,11));
-   			other_ship_matrix_helper.Rotate(0, 1.27);
+   			other_ship_matrix_helper.Rotate(0, PI/2);
             other_ship->transformation = other_ship_matrix_helper * (*tempMatrix);
    			//other_ship->transformation.Translate(R3Vector(0,0,0));
             other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
@@ -1861,7 +1860,7 @@ static void set_up_socket()
             other_ship->parent = scene->Root();
    			other_ship_matrix_helper = R3identity_matrix;
    			other_ship_matrix_helper.Translate(R3Vector(0,-18,9));
-   			other_ship_matrix_helper.Rotate(0, 1.27);
+   			other_ship_matrix_helper.Rotate(0, PI/2);
             other_ship->transformation = other_ship_matrix_helper * (*tempMatrix);
    			//other_ship->transformation.Translate(R3Vector(0,0,0));
             other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
