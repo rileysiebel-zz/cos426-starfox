@@ -73,6 +73,7 @@ double cull_behind_cutoff = 50;
 
 // this is Arwing
 R3Mesh *ship;
+R3Node *shipNode;
 R3Node *other_ship;
 R3Matrix trans;
 double shipTipX,shipTipY,shipTipZ;
@@ -765,7 +766,7 @@ void GLUTRedraw(void) {
     //double diff = ship->Center().Y() - ship->Face(200)->vertices.at(0)->position.Y();
     //fprintf(stderr, "%f\n", diff-shipTipY);
     //printf("%f:%f:%f\n", ship->Center().X(),ship->Center().Y(),ship->Center().Z());
-	
+
 	glEnable(GL_SCISSOR_TEST);
 	for (int i = 0; i < 2; i ++) {
 		if (i == 0) {
@@ -1218,10 +1219,13 @@ void updateShip() {
         y_move = 0*y_move;
     if (front_intersection)
         z_move = 0;
+	shipNode->transformation.Translate(0,deltaMoveX);
+	shipNode->transformation.Translate(1,deltaMoveZ);
+	shipNode->transformation.Translate(2,-shipSpeed);	
     
     //can change these two lines to node matrix transformation
-    ship->Translate(x_move, y_move, z_move);
-    scene->arwingNode->bbox.Translate(R3Vector(x_move, y_move, z_move));
+    //ship->Translate(x_move, y_move, z_move);
+    //scene->arwingNode->bbox.Translate(R3Vector(x_move, y_move, z_move));
 }
 
 //Awais
@@ -1760,7 +1764,9 @@ ReadScene(const char *filename) {
     // get the ship
     
     ship = scene->Root()->children.at(0)->children.at(0)->shape->mesh;
-    
+	shipNode = scene->Root()->children.at(0);
+	//shipNode->transformation.
+
 #if defined(__APPLE__)
     if (two_player)
     {
