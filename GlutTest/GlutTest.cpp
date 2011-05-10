@@ -902,8 +902,8 @@ static void* receive_data(void *threadid)
       		my_info.yp = (*tempMatrix)[1][3];
         		my_info.zp = (*tempMatrix)[2][3];
       		
-      		cout << my_info.zp << endl;
-      		cout << (*tempMatrix)[2][3] << endl;
+      		//cout << my_info.zp << endl;
+      		//cout << (*tempMatrix)[2][3] << endl;
       		
       		if (sendto(s_in, &my_info, sizeof(struct info_to_send), 0, 
       						(struct sockaddr*) &si_other, slen)==-1)
@@ -1225,9 +1225,9 @@ static void* receive_data(void *threadid)
          y_move = 0*y_move;
       if (front_intersection)
          z_move = 0;
-      tempMatrix->Translate(0,deltaMoveX);
-      tempMatrix->Translate(1,deltaMoveZ);
-      tempMatrix->Translate(2,-shipSpeed);	
+      tempMatrix->Translate(0,x_move);
+      tempMatrix->Translate(1,y_move);
+      tempMatrix->Translate(2,z_move);	
    
     //can change these two lines to node matrix transformation
       ship->Translate(x_move, y_move, z_move);
