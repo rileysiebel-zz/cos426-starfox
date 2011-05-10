@@ -37,7 +37,7 @@ ambient(0,0,0,1)
 
 SFEnemy::SFEnemy(void)
 : fixed(1),
-firingRate(rand() % 10),
+firingRate(rand() * 10 + 1),
 projectileLength(1),
 projectileSpeed(.1),
 health(10)
