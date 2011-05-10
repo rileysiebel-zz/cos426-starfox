@@ -917,29 +917,6 @@ static void* receive_data(void *threadid)
       		net_info.xp = 0;
          		net_info.yp = 0;
          		net_info.zp = 0;
-			}
-			if (is_client)//checked
-			{
-				if (sendto(sock_out, &my_info, sizeof(struct info_to_send), 0, 
-						   (struct sockaddr*)&si_other, slen)==-1)
-					diep("sendto()");
-                
-                
-				my_info.xp = (ship_pos.X()-old_ship_pos.X());
-				my_info.zp = (old_ship_pos.Y() - ship_pos.Y());
-				my_info.yp = (-old_ship_pos.Z() + ship_pos.Z());
-                
-                
-				//cout << (other_ship->transformation * other_ship->shape->mesh->Center()).X() << endl; 
-         		R3Vector vec = R3Vector(net_info.xp
-										,net_info.yp
-										, net_info.zp
-										);
-				other_ship->transformation.Translate(vec);
-				net_info.xp = 0;
-         		net_info.yp = 0;
-         		net_info.zp = 0;
-			}
 		}
 #endif
 	    
@@ -1860,9 +1837,9 @@ static void set_up_socket()
 				other_ship_matrix_helper = R3identity_matrix;
 				other_ship_matrix_helper.Translate(R3Vector(0,-18,11));
 				other_ship_matrix_helper.Rotate(0, 1.27);
-            other_ship->transformation = other_ship_matrix_helper * shipNode->transformation;
+            other_ship->transformation = other_ship_matrix_helper * (*tempMatrix);
 				//other_ship->transformation.Translate(R3Vector(0,0,0));
-            other_ship->bbox = shipNode->bbox;
+            other_ship->bbox = scene->Root()->children[0]->children[0]->bbox;
             other_ship->material = NULL;
             other_ship->enemy = new SFEnemy();
             
@@ -1879,9 +1856,7 @@ static void set_up_socket()
             other_ship->shape->mesh = new R3Mesh(*ship);
             other_ship->children = vector<R3Node*>();  
             other_ship->parent = scene->Root();
-            other_ship->transformation = shipNode->transformation;
-    			shipNode->transformation.Translate(R3Vector(0,-2,0));
-				other_ship->bbox = shipNode->bbox;
+            other_ship->transformation = other_ship_matrix_helper;
             other_ship->material = NULL;
             other_ship->enemy = new SFEnemy();
             
