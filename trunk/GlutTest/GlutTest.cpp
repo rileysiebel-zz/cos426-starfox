@@ -137,8 +137,8 @@ ProjectileInter projIntersect(SFProjectile *proj);
    double rotationStep = 0.01;
 
 // speed variables
-double cameraSpeed = 0.00;
-double shipSpeed = 0.00;
+double cameraSpeed = 0.05;
+double shipSpeed = 0.05;
 
 // mutilple views
    enum view {INSIDE, OUTSIDE};
@@ -146,6 +146,7 @@ double shipSpeed = 0.00;
 
 // Health
    double health = 100;
+int laserStrength = 5;
 
 // Smoke variables
    const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
@@ -876,7 +877,7 @@ static void* receive_data(void *threadid)
         
          DrawProjectiles(scene);
         
-        DrawSmoke();
+        
         
 		// Draw scene edges
 		glDisable(GL_LIGHTING);
@@ -934,8 +935,12 @@ static void* receive_data(void *threadid)
 		//	drawParticles(smokeParticles,abc->at(i).X(),abc->at(i).Y(),abc->at(i).Z(),2,2,2,&ship_pos,500,5);
 		//}
 
+       DrawSmoke();
+       
          glutSwapBuffers();
          glFlush();
+       
+       
       }
    }
 
@@ -1428,7 +1433,7 @@ void updateEnemies(void)
         
         enemy->movementPath += R3Vector(0,0,-.0001);
         smokeSources.push_back(enemy);
-        
+       // DrawSmoke();
         //printf("should have erased");
     } 
     
@@ -1468,11 +1473,11 @@ void updateProjectiles(void)
                 //decrease healths
                 if (inter.node == scene->arwingNode)
                 {
-                    health -= 5;
+                    health -= laserStrength;
                 }
                 else if (inter.node->enemy != NULL)
                 {
-                    inter.node->enemy->health -= 5;
+                    inter.node->enemy->health -= laserStrength;
                     printf("enemy health %d\n",inter.node->enemy->health);
                 }
                 
@@ -1613,15 +1618,15 @@ ProjectileInter projIntersect(SFProjectile *proj)
 
 void DrawSmoke(void)
 {
-    for (unsigned int i = 0; i < smokeSources.size(); i++)
+    /*for (unsigned int i = 0; i < smokeSources.size(); i++)
     {
         R3Point p = smokeSources[i]->position;
         p.Transform(smokeSources[i]->node->cumulativeTransformation);
         
         //printf("pos %f %f %f\n", p.X(),p.Y(),p.Z());
         //drawParticles(smokeParticles,p.X(),p.Y(),p.Z(),2,2,2,&ship_pos,100,50);
-        //drawParticles(smokeParticles,0,20,20,2,2,2,&ship_pos,cull_depth,5);
-    }
+    }*/
+    drawParticles(smokeParticles,0,20,20,2,2,2,&ship_pos,cull_depth,5);
 }
 
 void arwingShoot(void)
