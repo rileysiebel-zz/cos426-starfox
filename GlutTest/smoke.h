@@ -47,12 +47,12 @@ Vec3f adjParticlePos(Vec3f pos);
 bool compareParticles(Particle* particle1, Particle* particle2);
 
 const float GRAVITY = 3.0f;
-const int NUM_PARTICLES = 1000;
+const int NUM_PARTICLES = 100;
 //The interval of time, in seconds, by which the particle engine periodically
 //steps.
 const float STEP_TIME = 0.01f;
 //The length of the sides of the quadrilateral drawn for each particle.
-const float PARTICLE_SIZE = 0.05f;
+const float PARTICLE_SIZE = 0.1f;
 
 
 class ParticleEngine {
