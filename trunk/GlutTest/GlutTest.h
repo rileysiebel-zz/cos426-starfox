@@ -42,6 +42,7 @@ void setOrthographicProjection(void);
 void restorePerspectiveProjection(void);
 void writeAltitude(void);
 void writeHealth(void);
+void writeDead(void);
 
 //enemy and projectile functions
 void updateEnemies(void);
