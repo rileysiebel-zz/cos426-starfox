@@ -46,7 +46,7 @@ health(10)
 
 SFEnemy::SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity, int health)
 : fixed(fix),
-firingRate(rand() % 10),
+firingRate(rand() % 10 + 1),
 movementPath(initialVelocity),
 projectileLength(1),
 projectileSpeed(.1),

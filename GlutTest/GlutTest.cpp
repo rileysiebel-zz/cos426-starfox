@@ -502,8 +502,7 @@ static struct info_to_send my_info;
         //BBoxes are not explicit-- we have to compute them.
          if (node->shape->mesh != NULL)
          {
-            if (node->enemy != NULL
-             &&   !two_player)
+            if (node->enemy != NULL)
             {
                c = transformation * node->shape->mesh->Center();
                xmid = 4;//node->shape->mesh->Radius();
@@ -1387,12 +1386,8 @@ static void* receive_data(void *threadid)
                   R3Point arwingPos = ship_pos + shipSpeed * yyy;
 						cout << "arwing: " <<endl;
 						cout << arwingPos.X() << " " << arwingPos.Y() << " " << arwingPos.Z() << endl;
-                  R3Point enemyPos = enemy->position;
-		  printf("Enemy: %f, $f, $f\nArwing: %f, %f, %f\nShip: %f, %f, %f\n\n", 
-			 enemyPos.X(), enemyPos.Y(), enemyPos.Z(), 
-			 arwingPos.X(), arwingPos.Y(), arwingPos.Z(),
-			 ship_pos.X(), ship_pos.Y(), ship_pos.Z());
-                  proj->parentNode = enemy->node;
+      				proj->parentNode = enemy->node;            
+         			R3Point enemyPos = enemy->position;
                     
                     //can change these two lines to node matrix transformation
                   enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
