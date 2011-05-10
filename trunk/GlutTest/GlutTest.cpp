@@ -881,11 +881,11 @@ static void* receive_data(void *threadid)
         
          DrawScene(scene);
         
-		  //cout << "ship_pos" << endl;
-		  	//cout << ship_pos.X() << endl;
-			//cout << ship_pos.Y() << endl;
-			//cout << ship_pos.Z() << endl;
-		  
+        //cout << "ship_pos" << endl;
+        	//cout << ship_pos.X() << endl;
+      	//cout << ship_pos.Y() << endl;
+      	//cout << ship_pos.Z() << endl;
+        
          DrawProjectiles(scene);
         
         
@@ -982,11 +982,29 @@ static void* receive_data(void *threadid)
       // spacebar
       else if (key == 32)
          arwingShoot();
-      else if (key == 49)
+         
+      if (key == 'a')
    	{
-   		cameraSpeed = -cameraSpeed;
-         shipSpeed = -shipSpeed;
-      }
+            cameraSpeed = -cameraSpeed;
+            shipSpeed = -shipSpeed;
+         }
+         if (key == 'f')
+   	{
+   			if (cameraSpeed <= .3)
+   			{
+            cameraSpeed += .1;
+            shipSpeed += .1;
+            }
+         }
+         if (key == 'd')
+   	{
+   			if (cameraSpeed >= .1)
+   			{
+            cameraSpeed -= .1;
+            shipSpeed -= .1;
+            }
+         }
+            
     
    }
 
@@ -1054,6 +1072,7 @@ static void* receive_data(void *threadid)
             }
             break;
       }
+   	
    }
 
 // Awais
@@ -1083,10 +1102,10 @@ static void* receive_data(void *threadid)
          case GLUT_KEY_F2 :
             rotationAngle = 0.0;
             break;
-         case 49:
-      		shipSpeed = -shipSpeed;
-      		cameraSpeed = -cameraSpeed;
-      		break;
+         case 'a':
+            shipSpeed = -shipSpeed;
+            cameraSpeed = -cameraSpeed;
+            break;
       }
    }
 
@@ -1369,7 +1388,7 @@ static void* receive_data(void *threadid)
                if (!enemy->fixed)
                {
                     //move
-                  R3Vector *v = &enemy->movementPath;
+                  R3Vector *v = &(enemy->movementPath*20);
                   enemy->node->shape->mesh->Translate(v->X(), v->Y(), v->Z());
                   enemy->node->bbox.Translate(R3Vector(v->X(), v->Y(), v->Z()));
                   enemy->position = enemy->node->shape->mesh->Center();
@@ -1381,13 +1400,13 @@ static void* receive_data(void *threadid)
                if ((int)GetTime() % enemy->firingRate == 0 && (int)RandomNumber() % enemy->firingRate == 0)
                {
                   SFProjectile *proj = new SFProjectile(.3, enemy->node);
-						cout << "SHIP_POS" << endl;
-						cout << ship_pos.X() << " " << ship_pos.Y() << " " << ship_pos.Z() << endl;
+                  cout << "SHIP_POS" << endl;
+                  cout << ship_pos.X() << " " << ship_pos.Y() << " " << ship_pos.Z() << endl;
                   R3Point arwingPos = ship_pos + shipSpeed * yyy;
-						cout << "arwing: " <<endl;
-						cout << arwingPos.X() << " " << arwingPos.Y() << " " << arwingPos.Z() << endl;
-      				proj->parentNode = enemy->node;            
-         			R3Point enemyPos = enemy->position;
+                  cout << "arwing: " <<endl;
+                  cout << arwingPos.X() << " " << arwingPos.Y() << " " << arwingPos.Z() << endl;
+                  proj->parentNode = enemy->node;            
+                  R3Point enemyPos = enemy->position;
                     
                     //can change these two lines to node matrix transformation
                   enemyPos.Transform(scene->Enemy(i)->node->cumulativeTransformation);
@@ -1411,10 +1430,10 @@ static void* receive_data(void *threadid)
                     //    projDir *= 4;
                     
                   proj->segment = *(new R3Segment(enemyPos, projDir));
+                  
+               	
                     
                     //   printf("new proj from %f %f %f   to %f %f %f \n",proj->segment.Start().X(),proj->segment.Start().Y(),proj->segment.Start().Z(),proj->segment.End().X(),proj->segment.End().Y(),proj->segment.End().Z());
-                    
-                  scene->projectiles.push_back(proj);
                     
                     
                     // Create scene graph node
@@ -1433,10 +1452,12 @@ static void* receive_data(void *threadid)
                   projNode->shape = shape;
                   projNode->bbox = proj->segment.BBox();
                   projNode->enemy = NULL;
+                  proj->node = projNode;
                     
                     //Note: specifically choosing NOT to merge bboxes with the generating enemy
                   enemy->node->children.push_back(projNode);
                   projNode->parent = enemy->node;
+                  scene->projectiles.push_back(proj);
                }
             }
          }
@@ -1522,7 +1543,6 @@ static void* receive_data(void *threadid)
  t++;
  }
  }*/
-
 //move projectiles, check for intersections
    void updateProjectiles(void)
    {
@@ -1556,7 +1576,7 @@ static void* receive_data(void *threadid)
                 //decrease healths
                if (inter.node == scene->arwingNode)
                {
-                  health -= 2;
+                  health -= 20;
                }
                else if (inter.node->enemy != NULL)
                {
@@ -1578,11 +1598,26 @@ static void* receive_data(void *threadid)
                 //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
             }
          }
-         sort (scene->projectiles.begin(), scene->projectiles.end());
+         
+      	
+      	
          for (int i = deletionIndices.size() - 1; i >= 0; i--)
          {
             //   delete scene->Projectile(deletionIndices[i]);
+         	SFProjectile* proj = scene->projectiles[deletionIndices[i]];
+         	vector<R3Node*> chldrn = scene->projectiles[deletionIndices[i]]->parentNode->children;
+         	
+         	for (unsigned int j = 0; j < chldrn.size(); j++)
+         	{
+         		if (chldrn[j] == proj->node)
+         		{
+         			delete proj;
+         			chldrn.erase(chldrn.begin() + j);
+         		}
+         	}
+         	
             scene->projectiles.erase(scene->projectiles.begin() + deletionIndices[i]);
+            
          } 
       }
    }

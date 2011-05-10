@@ -212,7 +212,7 @@ struct SFEnemy {
 public:
     //Constructors
     SFEnemy(void);
-    SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity, int health);
+    SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity, int health, float particle_velocity, int firing_rate);
     
     //  void Update(void);  //handled in gluttest.cpp
     
@@ -250,4 +250,5 @@ public:
     double power;
     double speed;
     R3Node *parentNode;
+	 R3Node* node;
 };
