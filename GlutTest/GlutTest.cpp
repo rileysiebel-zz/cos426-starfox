@@ -1766,7 +1766,8 @@ static void set_up_socket()
     
    #if defined(__APPLE__)
    	//Set up a listening socket
-    set_up_socket();
+		if (two_player)
+    		set_up_socket();
    #endif
    	
    	// smoke texturing
