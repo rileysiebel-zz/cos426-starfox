@@ -138,8 +138,8 @@ static struct info_to_send my_info;
    double rotationStep = 0.01;
 
 // speed variables
-   double cameraSpeed = 0.0;
-   double shipSpeed = 0.0;
+   double cameraSpeed = .01;
+   double shipSpeed = .01;
 
 // mutilple views
    enum view {INSIDE, OUTSIDE};
@@ -978,6 +978,11 @@ static void* receive_data(void *threadid)
       // spacebar
       else if (key == 32)
          arwingShoot();
+      else if (key == 49)
+   	{
+   		cameraSpeed = -cameraSpeed;
+         shipSpeed = -shipSpeed;
+      }
     
    }
 
@@ -1074,6 +1079,10 @@ static void* receive_data(void *threadid)
          case GLUT_KEY_F2 :
             rotationAngle = 0.0;
             break;
+         case 49:
+      		shipSpeed = -shipSpeed;
+      		cameraSpeed = -cameraSpeed;
+      		break;
       }
    }
 
