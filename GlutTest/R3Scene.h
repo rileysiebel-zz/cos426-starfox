@@ -212,8 +212,6 @@ struct SFEnemy {
 public:
     //Constructors
     SFEnemy(void);
-    SFEnemy(const SFEnemy& enemy);
-    SFEnemy(int fix);
     SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity, int health);
     
     //  void Update(void);  //handled in gluttest.cpp
@@ -225,7 +223,7 @@ public:
     R3Vector movementPath;  //direction of enemy's movement, if applicable
     R3Vector towards;       //enemy's facing direction
     
-    double firingRate;
+    int firingRate;
     double movementSpeed;
     
     double fov;             //(radians) breadth of enemy's vision

@@ -37,17 +37,16 @@ ambient(0,0,0,1)
 
 SFEnemy::SFEnemy(void)
 : fixed(1),
+firingRate(rand() % 10),
 projectileLength(1),
 projectileSpeed(.1),
-health(25)
+health(10)
 {
 }
 
-//SFEnemy::SFEnemy(const SFEnemy& enemy);
-//SFEnemy::SFEnemy(int fix);
-
 SFEnemy::SFEnemy(int fix, R3Mesh *mesh, R3Vector& initialVelocity, int health)
 : fixed(fix),
+firingRate(rand() % 10),
 movementPath(initialVelocity),
 projectileLength(1),
 projectileSpeed(.1),
