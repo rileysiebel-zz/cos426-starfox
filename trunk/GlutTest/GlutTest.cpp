@@ -1505,6 +1505,7 @@ void updateProjectiles(void)
                 //    printf(" to %f:%f:%f\n",proj->segment.Start().X(), proj->segment.Start().Y(), proj->segment.Start().Z());
             }
         }
+      t++;
     }
 }
 
